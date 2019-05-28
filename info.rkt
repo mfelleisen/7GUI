@@ -4,8 +4,7 @@
 
 (define deps
   '("gregor"
-    "2htdp"
-    )))
+    ))
 
 (define pkg-desc "Sources for 7GUI")
 

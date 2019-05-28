@@ -1,6 +1,6 @@
 #lang racket/gui
 
-;; count the number of clicks on the "count" button
+;; a mouse-click counter
 
 (define counter-state 0)
 

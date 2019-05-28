@@ -6,12 +6,11 @@
 (define *F 0)
 
 (define-syntax-rule
-  (define-callback (name the-field *from converter *to))
+  (define-callback (name field *from convert *to))
   (define (name . x)
-    (define field-as-number (if (empty? x) 0 (string->number (send the-field get-value))))
-    (when field-as-number 
-      (set! *from field-as-number)
-      (set! *to   (converter *from))
+    (define field:num (if (empty? x) 0 (string->number (send field get-value))))
+    (when field:num 
+      (set!-values (*from *to) (values field:num (convert field:num)))
       (send C-field set-value (~a *C))
       (send F-field set-value (~a *F)))))
 
