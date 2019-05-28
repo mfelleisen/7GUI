@@ -14,16 +14,18 @@
 (define ONE     "one-way flight")
 (define RETURN  "return flight")
 (define CHOICES `(,ONE ,RETURN))
+(define RED     (make-object color% "red"))
+(define WHITE   (make-object color% "white"))
 
-(define *flight (list-ref CHOICES 0))
-(define *start-date (to-date DATE0))
-(define *return-date (to-date DATE0))
+(define *flight      (list-ref CHOICES 0)) ;; one of the CHOICES
+(define *start-date  (to-date DATE0))      ;; date
+(define *return-date (to-date DATE0))      ;; date 
 
-(define (enable-book)
+(define (enable-book (start-date *start-date) (return-date *return-date))
   (send book enable #f)
-  (when (and (date<=? (today) *start-date)
+  (when (and start-date (date<=? (today) start-date)
              (or (string=? ONE *flight)
-                 (date<=? *start-date *return-date)))
+                 (and return-date (date<=? start-date return-date))))
     (send book enable #t)))
 
 (define (enable-return-book . self+evt)
@@ -34,7 +36,12 @@
 (define-syntax-rule (field *date e)
   (let ((field-cb (lambda (self evt)
                     (define date (to-date (send self get-value)))
-                    (when date (set! *date date) (enable-book)))))
+                    (cond
+                      [date (set! *date date)
+                            (send self set-field-background WHITE)
+                            (enable-book)]
+                      [else (send self set-field-background RED)
+                            (enable-book #f #f)]))))
     (new text-field% [parent frame][label ""][init-value DATE0][enabled e] [callback field-cb])))
 
 (define frame    (new frame% [label "flight booker"]))
