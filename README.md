@@ -5,6 +5,7 @@ A Racket Implementation of [7 GUIs](https://eugenkiss.github.io/7guis/)
 - task 2: a bi-directional temperature converter 
 - task 3: a constrained flight booking choice 
 - task 4: a timer 
+- task 5: a CRUD MVC 
 
 
 To install, 
