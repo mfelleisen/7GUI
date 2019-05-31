@@ -3,7 +3,6 @@
 ;; a simple spreadsheet
 
 ;; todo:
-;; -- compute content when cell is entered, follow dependencies 
 ;; -- graphic layout isn't quite complete 
 ;; -- circular dependencies
 ;; -- double click isn't quite right, use timer% and sync
@@ -23,15 +22,28 @@
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
 (define (register-content letter index vc)
-  (set! *content (hash-set *content (list letter index) vc)))
+  (define ref* (list letter index))
+  (define current (hash-ref *content ref* #f))
+  (set! *content (hash-set *content ref* vc))
+  (when (and current (not (= current vc)))
+    (define f (hash-ref *formulas ref* #f))
+    (when f 
+      (match-define (formula _ dependents) f)
+      (propagate dependents))))
 
-(define (register-formula letter index f)
-  (define depends (dependents f))
+(define (propagate dependents)
+  (for ((d dependents))
+    (match-define (formula exp* _) (hash-ref *formulas d))
+    (register-content (first d) (second d) (evaluate-exp exp*))))
+      
+(define (register-formula letter index exp*)
+  (define depends (dependents exp*))
   (define ref*    (list letter index))
   (define current (hash-ref *formulas ref* #f))
   (define new     (if (boolean? current) (set) (formula-dependents current)))
-  (set! *formulas (hash-set *formulas ref* (formula f new)))
-  (for ((d (in-set depends))) (register-dependents d ref*)))
+  (set! *formulas (hash-set *formulas ref* (formula exp* new)))
+  (for ((d (in-set depends))) (register-dependents d ref*))
+  (register-content letter index (evaluate-exp exp*)))
 
 (define (register-dependents ref-depends-on ref*)
   (define current (hash-ref *formulas ref-depends-on #f))
@@ -46,9 +58,8 @@
       [(list L I) (set-add accumulator exp*)]
       [(list '+ left right) (loop left (loop right accumulator))])))
 
-#;{ Formula -> Integer}
-(define (evaluate-exp f)
-  (match-define (formula exp* _) f)
+#;{ Exp* -> Integer}
+(define (evaluate-exp exp*)
   (let loop ([exp* exp*])
     (match exp*
       [(? number?) exp*]
@@ -73,11 +84,9 @@
          (or (and x (split x))
              (let ([x (regexp-match #px"([A-Z])(\\d)" x:str)])
                (and x (split x)))))))
-(define (split x) (match x [(list _ letter index) (list letter (string->number index))]))
 
-(valid-formula "A1")
-(valid-formula "(+ A1 B99)")
-(valid-formula "(+ A1 B99) C1")
+(define (split x)
+  (match x [(list _ letter index) (list (string-ref letter 0) (string->number index))]))
 
 (define (valid-content x)
   (define n (string->number x))
@@ -103,14 +112,12 @@
            (define y (send evt get-y))
            (cond
              [(< (- ts *ts)  DOUBLE-CLICK-INTERVAL)
-              ;; double click 
               (set! *ts #f)
               (popup-formula-editor x y)]
              [else
-              ;; single click 
               (set! *ts #f)
-              (popup-content-editor x y)])]))
-      (paint-callback this 'y))
+              (popup-content-editor x y)])
+           (paint-callback this 'y)])))
     
     (define (paint-callback _self _evt)
       (paint-grid (get-dc)))
@@ -177,10 +184,8 @@
     (define dialog (new dialog% [style '(close-button)] [label (format title-fmt letter index)]))
     (define field  (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80]
                         [callback (λ (self evt)
-                                    (define type (send evt get-event-type))
-                                    (when (eq? 'text-field-enter type)
-                                      (define content (send field get-value))
-                                      (define valid (validator content))
+                                    (when (eq? (send evt get-event-type) 'text-field-enter)
+                                      (define valid (validator (send field get-value)))
                                       (when valid 
                                         (registration letter index valid)
                                         (send dialog show #f))))]))
@@ -191,10 +196,8 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width 400][height 400]))
-(define canvas
-  (begin0
-    (new cells-canvas [parent frame] [style '(hscroll vscroll)])
-    (send canvas init-auto-scrollbars 1000 1000 0. 0.)
-    (send canvas show-scrollbars #t #t)))
+(define canvas (new cells-canvas [parent frame] [style '(hscroll vscroll)]))
+(send canvas init-auto-scrollbars 1000 1000 0. 0.)
+(send canvas show-scrollbars #t #t)
 
 (send frame show #t)
