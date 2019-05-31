@@ -2,9 +2,6 @@
 
 ;; a simple spreadsheet (will not check for circularities)
 
-;; todo:
-;; -- double click isn't quite right, use timer% and sync
-
 ;; ---------------------------------------------------------------------------------------------------
 (define LETTERS  "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 #; {Index      : N in [0,99]}
@@ -96,29 +93,33 @@
 (define cells-canvas
   (class canvas%
     (inherit on-paint get-dc)
-    
-    (define *ts #f)
 
+    (define *possible-double-click? #f)
+    (define *x 0)
+    (define *y 0)
+
+    (define (timer-cb)
+      (when *possible-double-click?
+        (popup-content-editor *x *y)
+        (paint-callback this 'y))
+      (set! *possible-double-click? #f))
+    (define timer (new timer% [notify-callback timer-cb]))
+    
     (define/override (on-event evt)
-      (define type (send evt get-event-type))
-      (define ts   (send evt get-time-stamp))
-      (when (eq? type 'left-down)
+      (when (eq? (send evt get-event-type) 'left-down)
+        (set! *x (send evt get-x))
+        (set! *y (send evt get-y))
         (cond
-          [(boolean? *ts) (set! *ts ts)]
+          [(not *possible-double-click?)
+           (set! *possible-double-click? #t)
+           (send timer start DOUBLE-CLICK-INTERVAL)]
           [else
-           (define x (send evt get-x))
-           (define y (send evt get-y))
-           (cond
-             [(< (- ts *ts)  DOUBLE-CLICK-INTERVAL)
-              (set! *ts #f)
-              (popup-formula-editor x y)]
-             [else
-              (set! *ts #f)
-              (popup-content-editor x y)])
+           (send timer stop)
+           (set! *possible-double-click? #f)
+           (popup-formula-editor *x *y)
            (paint-callback this 'y)])))
     
-    (define (paint-callback _self _evt)
-      (paint-grid (get-dc)))
+    (define (paint-callback _self _evt) (paint-grid (get-dc)))
     
     (super-new [paint-callback paint-callback])))
 
@@ -151,6 +152,9 @@
 
 (define (paint-grid dc)
   (send dc clear)
+
+  (send dc draw-text "click for content" X-OFFSET 5)
+  (send dc draw-text "double click for formula" X-OFFSET 25)
 
   (send dc set-brush solid-gray)
   (for ((letter (in-string LETTERS)) (i (in-naturals)))
