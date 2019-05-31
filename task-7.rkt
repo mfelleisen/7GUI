@@ -132,27 +132,21 @@
 (define X-OFFSET 2)
 (define Y-OFFSET 10)
 
-(define (A0->xy xletter y-index) (values (A->x xletter) (0->y y-index)))
-(define (A->x xletter)
-  (for/first ((l (in-string LETTERS)) (i (in-naturals)) #:when (equal? l xletter))
+(define (A->x letter)
+  (for/first ((l (in-string LETTERS)) (i (in-naturals)) #:when (equal? l letter))
     (+ (* (+ i 1) HSIZE) X-OFFSET)))
-(define (0->y i) (+ (* (+ i 1) VSIZE) Y-OFFSET))
 
-(define (x->A x0)
-  (define x (- x0 HSIZE))
+(define (0->y index)
+  (+ (* (+ index 1) VSIZE) Y-OFFSET))
+
+(define ((finder range SIZE) x0)
+  (define x (- x0 SIZE))
   (and (positive? x)
-       (for/first ((l (in-string LETTERS))
-                   (i (in-naturals))
-                   #:when (<= (+ (* i HSIZE) X-OFFSET) x (+ (* (+ i 1) HSIZE) X-OFFSET)))
-         l)))
+       (for/first ((r range) (i (in-naturals)) #:when (<= (+ (* i SIZE)) x (+ (* (+ i 1) SIZE)))) r)))
 
-(define (y->0 y0)
-  (define y (- y0 VSIZE))
-  (and (positive? y)
-       (for/first ((index (in-range 100))
-                   (i (in-naturals))
-                   #:when (<= (+ (* i VSIZE)) y (+ (* (+ i 1) VSIZE) Y-OFFSET)))
-         index)))
+(define x->A (finder (in-string LETTERS) HSIZE))
+
+(define y->0 (finder (in-range 100) VSIZE))
 
 (define (paint-grid dc)
   (send dc clear)
@@ -170,9 +164,9 @@
 
   (for (((key value) (in-hash *content)))
     (match-define (list letter index) key)
-    (define word  (~a value))
-    (define-values (x0 y0) (A0->xy letter index))
-    (send dc draw-text word x0 y0)))
+    (define x0 (A->x letter))
+    (define y0 (0->y index))
+    (send dc draw-text (~a value) x0 y0)))
 (define solid-gray (new brush% [color "lightgray"]))
 
 ;; ---------------------------------------------------------------------------------------------------
