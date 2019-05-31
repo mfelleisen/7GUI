@@ -152,9 +152,12 @@
 
 (define (paint-grid dc)
   (send dc clear)
-
-  (send dc draw-text "click for content" X-OFFSET 5)
-  (send dc draw-text "double click for formula" X-OFFSET 25)
+  
+  (let* ([current-font (send dc get-font)])
+    (send dc set-font small-font)
+    (send dc draw-text "click for content" X-OFFSET 2)
+    (send dc draw-text "double for formula" X-OFFSET 15)
+    (send dc set-font current-font))
 
   (send dc set-brush solid-gray)
   (for ((letter (in-string LETTERS)) (i (in-naturals)))
@@ -172,6 +175,7 @@
     (define x0 (A->x letter))
     (define y0 (0->y index))
     (send dc draw-text (~a value) x0 y0)))
+(define small-font (make-object font% 12 'roman))
 (define solid-gray (new brush% [color "lightgray"]))
 
 ;; ---------------------------------------------------------------------------------------------------
@@ -194,7 +198,7 @@
 (define popup-content-editor (popup-editor "content for cell ~a~a" valid-content register-content))
 
 ;; ---------------------------------------------------------------------------------------------------
-(define frame  (new frame% [label "Cells"][width 400][height 400]))
+(define frame  (new frame% [label "Cells"][width (/ WIDTH 2)][height (/ HEIGHT 3)]))
 (define canvas (new cells-canvas [parent frame] [style '(hscroll vscroll)]))
 (send canvas init-auto-scrollbars WIDTH HEIGHT 0. 0.)
 (send canvas show-scrollbars #t #t)
