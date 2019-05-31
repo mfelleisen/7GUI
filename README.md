@@ -6,7 +6,8 @@ A Racket Implementation of [7 GUIs](https://eugenkiss.github.io/7guis/)
 - task 3: a constrained flight booking choice 
 - task 4: a timer 
 - task 5: a CRUD MVC 
-- task 6: a circle drawer, with undo/redo facility 
+- task 6: a circle drawer, with undo/redo facility (under-specified)
+- task 7: a simple spreadsheet
 
 
 To install, 

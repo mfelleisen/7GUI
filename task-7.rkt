@@ -11,30 +11,46 @@
 (struct formula (formula dependents) #:transparent)
 #; {Ref*       =  (List Letter Index)}
 #; {Exp*       =  Ref* || (list '+ Exp* Exp*)}
-#; {Formula    =  [formula Exp* || Number || (Setof Ref*)]} 
+#; {Formula    =  [formula Exp* || Number || (Setof Ref*)]}
 
-(define *content  (make-immutable-hash)) ;; [Hashof Ref* Number]
+(define (render-exp* exp*)
+  (if (boolean? exp*)
+      ""
+      (let render-exp* ((exp* exp*))
+        (match exp*
+          [(? number?) (~a exp*)]
+          [(list letter index) (~a letter index)]
+          [(list '+ left right) (format "(+ ~a ~a)" (render-exp* left) (render-exp* right))]))))
+
+(define *content  (make-immutable-hash)) ;; [Hashof Ref* Integer]
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
+
+(define-syntax-rule (define-retriever name (*source selector))
+  (define (name letter index)
+    (define f (hash-ref *source (list letter index) #f))
+    (and f (selector f))))
+
+(define-retriever retrieve-exp* (*formulas formula-formula))
+(define-retriever retrieve-dependents (*formulas formula-dependents))
+(define-retriever retrieve-content (*content values))
 
 (define (register-content letter index vc)
   (define ref* (list letter index))
-  (define current (hash-ref *content ref* #f))
+  (define current (retrieve-content letter index))
   (set! *content (hash-set *content ref* vc))
   (when (and current (not (= current vc)))
-    (define f (hash-ref *formulas ref* #f))
-    (when f 
-      (match-define (formula _ dependents) f)
-      (propagate-to dependents))))
+    (define f (retrieve-dependents letter index))
+    (when f (propagate-to f))))
 
 (define (propagate-to dependents)
   (for ((d dependents))
-    (match-define (formula exp* _) (hash-ref *formulas d))
+    (define exp* (retrieve-exp* (first d) (second d)))
     (register-content (first d) (second d) (evaluate-exp exp*))))
       
 (define (register-formula letter index exp*)
   (define ref*    (list letter index))
-  (define current (hash-ref *formulas ref* #f))
-  (define new     (formula exp* (if (boolean? current) (set) (formula-dependents current))))
+  (define current  (retrieve-dependents letter index))
+  (define new     (formula exp* (or current (set))))
   (set! *formulas (hash-set *formulas ref* new))
   (register-with-dependents (dependents exp*) ref*)
   (register-content letter index (evaluate-exp exp*)))
@@ -58,7 +74,7 @@
   (let loop ([exp* exp*])
     (match exp*
       [(? number?) exp*]
-      [(list L I) (hash-ref *content exp*)]
+      [(list L I) (retrieve-content L I)]
       [(list '+ left right) (+ (loop left) (loop right))])))
 
 (define (valid-formula x)
@@ -180,12 +196,14 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents 
-(define ((popup-editor title-fmt validator registration) x y)
+(define ((popup-editor title-fmt validator registration source) x y)
   (define letter (x->A x))
   (define index  (y->0 y))
   (when (and letter index)
+    (define value0 (~a (or (source letter index) "")))
     (define dialog (new dialog% [style '(close-button)] [label (format title-fmt letter index)]))
     (define field  (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80]
+                        [init-value value0]
                         [callback (λ (self evt)
                                     (when (eq? (send evt get-event-type) 'text-field-enter)
                                       (define valid (validator (send field get-value)))
@@ -194,8 +212,11 @@
                                         (send dialog show #f))))]))
     (send dialog show #t)))
       
-(define popup-formula-editor (popup-editor "a formula for cell ~a~a" valid-formula register-formula))
-(define popup-content-editor (popup-editor "content for cell ~a~a" valid-content register-content))
+(define popup-formula-editor
+  (popup-editor "a formula for cell ~a~a" valid-formula register-formula (compose render-exp* retrieve-exp*)))
+
+(define popup-content-editor
+  (popup-editor "content for cell ~a~a" valid-content register-content retrieve-content))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width (/ WIDTH 2)][height (/ HEIGHT 3)]))
