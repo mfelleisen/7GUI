@@ -1,10 +1,8 @@
 #lang at-exp racket/gui
 
-;; a simple spreadsheet
+;; a simple spreadsheet (will not check for circularities)
 
 ;; todo:
-;; -- graphic layout isn't quite complete 
-;; -- circular dependencies
 ;; -- double click isn't quite right, use timer% and sync
 
 ;; ---------------------------------------------------------------------------------------------------
@@ -29,26 +27,26 @@
     (define f (hash-ref *formulas ref* #f))
     (when f 
       (match-define (formula _ dependents) f)
-      (propagate dependents))))
+      (propagate-to dependents))))
 
-(define (propagate dependents)
+(define (propagate-to dependents)
   (for ((d dependents))
     (match-define (formula exp* _) (hash-ref *formulas d))
     (register-content (first d) (second d) (evaluate-exp exp*))))
       
 (define (register-formula letter index exp*)
-  (define depends (dependents exp*))
   (define ref*    (list letter index))
   (define current (hash-ref *formulas ref* #f))
-  (define new     (if (boolean? current) (set) (formula-dependents current)))
-  (set! *formulas (hash-set *formulas ref* (formula exp* new)))
-  (for ((d (in-set depends))) (register-dependents d ref*))
+  (define new     (formula exp* (if (boolean? current) (set) (formula-dependents current))))
+  (set! *formulas (hash-set *formulas ref* new))
+  (register-with-dependents (dependents exp*) ref*)
   (register-content letter index (evaluate-exp exp*)))
 
-(define (register-dependents ref-depends-on ref*)
-  (define current (hash-ref *formulas ref-depends-on #f))
-  (match-define (formula f old) (if current current (formula 0 (set))))
-  (set! *formulas (hash-set *formulas ref-depends-on (formula f (set-add old ref*)))))
+(define (register-with-dependents dependents ref*)
+  (for ((d (in-set dependents)))
+    (define current (hash-ref *formulas d #f))
+    (match-define (formula f old) (or current (formula 0 (set))))
+    (set! *formulas (hash-set *formulas d (formula f (set-add old ref*))))))
 
 #; {Exp* -> (Listof Ref*)}
 (define (dependents exp*)
@@ -132,6 +130,9 @@
 (define X-OFFSET 2)
 (define Y-OFFSET 10)
 
+(define WIDTH  (* (+ (string-length LETTERS) 1) HSIZE))
+(define HEIGHT (* 101 VSIZE))
+
 (define (A->x letter)
   (for/first ((l (in-string LETTERS)) (i (in-naturals)) #:when (equal? l letter))
     (+ (* (+ i 1) HSIZE) X-OFFSET)))
@@ -155,11 +156,11 @@
   (for ((letter (in-string LETTERS)) (i (in-naturals)))
     (define x (* (+ i 1) HSIZE))
     (send dc draw-rectangle x 0 HSIZE VSIZE)
-    (send dc draw-line x 0 x 1000)
+    (send dc draw-line x 0 x  HEIGHT)
     (send dc draw-text (string letter) (A->x letter) Y-OFFSET))
   (for ((i (in-range 100)))
     (define y (* (+ i 1) VSIZE))
-    (send dc draw-line 0 y 1000 y)
+    (send dc draw-line 0 y WIDTH y)
     (send dc draw-text (~a i) X-OFFSET (0->y i)))
 
   (for (((key value) (in-hash *content)))
@@ -191,7 +192,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width 400][height 400]))
 (define canvas (new cells-canvas [parent frame] [style '(hscroll vscroll)]))
-(send canvas init-auto-scrollbars 1000 1000 0. 0.)
+(send canvas init-auto-scrollbars WIDTH HEIGHT 0. 0.)
 (send canvas show-scrollbars #t #t)
 
 (send frame show #t)
