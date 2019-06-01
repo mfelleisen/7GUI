@@ -26,35 +26,35 @@
 (define *content  (make-immutable-hash)) ;; [Hashof Ref* Integer]
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
-(define-syntax-rule (define-retriever name (*source selector))
+(define-syntax-rule (define-getr name (*source selector))
   (define (name letter index)
     (define f (hash-ref *source (list letter index) #f))
     (and f (selector f))))
 
-(define-retriever retrieve-exp* (*formulas formula-formula))
-(define-retriever retrieve-dependents (*formulas formula-dependents))
-(define-retriever retrieve-content (*content values))
+(define-getr get-exp* (*formulas formula-formula))
+(define-getr get-dependents (*formulas formula-dependents))
+(define-getr get-content (*content values))
 
-(define (register-content letter index vc)
+(define (set-content! letter index vc)
   (define ref* (list letter index))
-  (define current (retrieve-content letter index))
+  (define current (get-content letter index))
   (set! *content (hash-set *content ref* vc))
   (when (and current (not (= current vc)))
-    (define f (retrieve-dependents letter index))
+    (define f (get-dependents letter index))
     (when f (propagate-to f))))
 
 (define (propagate-to dependents)
   (for ((d dependents))
-    (define exp* (retrieve-exp* (first d) (second d)))
-    (register-content (first d) (second d) (evaluate-exp exp*))))
+    (define exp* (get-exp* (first d) (second d)))
+    (set-content! (first d) (second d) (evaluate-exp exp*))))
       
-(define (register-formula letter index exp*)
+(define (set-formula! letter index exp*)
   (define ref*    (list letter index))
-  (define current  (retrieve-dependents letter index))
+  (define current (get-dependents letter index))
   (define new     (formula exp* (or current (set))))
   (set! *formulas (hash-set *formulas ref* new))
   (register-with-dependents (dependents exp*) ref*)
-  (register-content letter index (evaluate-exp exp*)))
+  (set-content! letter index (evaluate-exp exp*)))
 
 (define (register-with-dependents dependents ref*)
   (for ((d (in-set dependents)))
@@ -75,7 +75,7 @@
   (let loop ([exp* exp*])
     (match exp*
       [(? number?) exp*]
-      [(list L I) (retrieve-content L I)]
+      [(list L I) (get-content L I)]
       [(list '+ left right) (+ (loop left) (loop right))])))
 
 (define (valid-formula x)
@@ -214,10 +214,10 @@
     (send dialog show #t)))
       
 (define popup-formula-editor
-  (popup-editor "a formula for cell ~a~a" valid-formula register-formula (compose render-exp* retrieve-exp*)))
+  (popup-editor "a formula for cell ~a~a" valid-formula set-formula! (compose render-exp* get-exp*)))
 
 (define popup-content-editor
-  (popup-editor "content for cell ~a~a" valid-content register-content retrieve-content))
+  (popup-editor "content for cell ~a~a" valid-content set-content! get-content))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width (/ WIDTH 2)][height (/ HEIGHT 3)]))

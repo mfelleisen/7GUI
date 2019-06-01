@@ -17,6 +17,12 @@
     (elapsed-cb)))
 (define timer (new timer% [notify-callback timer-cb]))
 
+(define (elapsed-cb)
+  (send text set-value (format "elapsed ~a" *elapsed))
+  (unless (zero? *duration)
+    (define r (quotient (* 100 *elapsed) *duration))
+    (send elapsed set-value r)))
+
 (define (reset-cb . x)
   (send timer stop)
   (set! *elapsed 0)
@@ -28,12 +34,6 @@
     (send timer stop)
     (set! *duration new-duration)
     (timer-cb)))
-
-(define (elapsed-cb)
-  (send text set-value (format "elapsed ~a" *elapsed))
-  (unless (zero? *duration)
-    (define r (quotient (* 100 *elapsed) *duration))
-    (send elapsed set-value r)))
 
 (define frame   (new frame% [label "timer"]))
 (define elapsed (new gauge% [label "elapsed"][parent frame][enabled #f][range 100]))

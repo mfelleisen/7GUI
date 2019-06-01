@@ -3,42 +3,34 @@
 
 ;; a create-read-update-deleted MVC implementation 
 
+;; ---------------------------------------------------------------------------------------------------
 (define *data '("Emil, Hans" "Mustermann, Max" "Tisch, Roman"))
 (define *selector "")
-(define *selected *data)
+(define *selected *data) ;; selected = (filter select data)
 
-(define (selector! nu) (set! *selector nu) (data->selected))
+(define (selector! nu) (set! *selector nu) (data->selected!))
 (define (select s) (string-prefix? s *selector))
-(define (data->selected)  (set! *selected (if (string=? "" *selector) *data (filter select *data))))
+(define (data->selected!)  (set! *selected (if (string=? "" *selector) *data (filter select *data))))
 
-(define-syntax-rule (def-! (name x ...) exp) (define (name x ...) (set! *data exp) (data->selected)))
-
+(define-syntax-rule (def-! (name x ...) exp) (define (name x ...) (set! *data exp) (data->selected!)))
 (def-! (create-entry new-entry) (append *data (list new-entry)))
-(def-! (update-entry new-entry i) (find i *data select *selected (curry cons new-entry)))
-(def-! (delete-from i) (find i *data select *selected values))
+(def-! (update-entry new-entry i) (operate-on i (curry cons new-entry) *data select *selected))
+(def-! (delete-from i) (operate-on i  values)) *data select *selected
 
-#; {N [Listof X] [X -> Boolean] [Listof X] [[Listof X] -> [Listof X]] -> [Listof X]}
+#; {N [[Listof X] -> [Listof X]] [Listof X] [X -> Boolean] [Listof X] -> [Listof X]}
+;; traverse list to the i-th position of selected in data, then apply operator to rest (efficiency)
 ;; ASSUME selected = (filter selector data)
 ;; ASSUME i <= (length selected)
-(define (find i data selector selected f)
-  (unless (equal? (filter selector data) selected) (error "assumption wrong"))
-
-  ;; (selector (first data)) holds 
-  (define (chop i data selected)
-    (if (zero? i)
-        (f (rest data))
-        (cons (first data) (sync (rest data) (sub1 i) (rest selected)))))
-    
-  (define (sync data i selected)
-    (if (selector (first data))
-        (chop i data selected)
-        (cons (first data) (sync (rest data) i selected))))
-
-  (sync data i selected))
+(define (operate-on i operator (data *data) (select select) (selected *selected))
+  (let sync ((i i) (data data) (selected selected))
+    (if (select (first data))
+        (if (zero? i)
+            (operator (rest data))
+            (cons (first data) (sync (sub1 i) (rest data) (rest selected))))
+        (cons (first data) (sync i (rest data) selected)))))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-syntax-rule (def-cb (name x) exp ...) (define (name x _y) exp ... (send lbox set *selected)))
-
 (def-cb (prefix-cb field) (selector! (if (string? field) field (send field get-value))))
 (def-cb (Create-cb _b) (create-entry (retrieve-name)))
 (def-cb (Update-cb _b) (common-cb (curry update-entry (retrieve-name))))
