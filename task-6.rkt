@@ -1,3 +1,4 @@
+#! /usr/bin/env gracket
 #lang at-exp racket/gui
 
 ;; a circle drawer with undo/redo facilities (unclear spec for resizing)

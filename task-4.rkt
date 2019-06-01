@@ -1,3 +1,4 @@
+#! /usr/bin/env gracket
 #lang at-exp racket/gui
 
 ;; a timer that permits the continuous setting of a new interval, plus

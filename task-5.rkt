@@ -1,3 +1,4 @@
+#! /usr/bin/env gracket
 #lang at-exp racket/gui
 
 ;; a create-read-update-deleted MVC implementation 
@@ -34,9 +35,6 @@
         (cons (first data) (sync (rest data) i selected))))
 
   (sync data i selected))
-
-(find 0 '(a b) (curry eq? 'b) '(b) values) '(a)
-(find 1 '(a b b) (curry eq? 'b) '(b b) values) '(a b)
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-syntax-rule (def-cb (name x) exp ...) (define (name x _y) exp ... (send lbox set *selected)))

@@ -1,3 +1,4 @@
+#! /usr/bin/env gracket
 #lang at-exp racket/gui
 
 ;; a simple spreadsheet (will not check for circularities)
