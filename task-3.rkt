@@ -7,18 +7,8 @@
 ;; ---------------------------------------------------------------------------------------------------
 (require gregor)
 
-;; this should be fixed in gregor
-(define (to-date d)
-  (define matched (regexp-match #px"(\\d\\d|\\d).(\\d\\d|\\d).(\\d\\d\\d\\d)" d))
-  (and matched
-       (let-values ([(dd mm yy) (apply values (map string->number (rest matched)))])
-         (with-handlers ([exn? (λ (_) #f)]) (date yy mm dd)))))
-
-#;
-(define (to-date d) (with-handlers ([exn? (λ (_) #f)]) (parse-date d "d.m.y")))
-;; BUG in gregor, issues raised (#34 at https://github.com/97jaz/gregor/issues/34)
-;; > (parse-date "27.03.2020" "d.m.y")
-;; #<date 2020-01-27>
+;; gregor should not raise an exception when parsing fails, but return #f
+(define (to-date d) (with-handlers ([exn? (λ (_) #f)]) (parse-date d "d.M.y")))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define DATE0   "27.03.2014")
@@ -35,7 +25,7 @@
 (define (enable-book (start-date *start-date) (return-date *return-date))
   (send book enable #f)
   (when (and start-date (date<=? (today) start-date)
-             (or (string=? ONE *kind-flight)
+             (or (and (string=? ONE *kind-flight))
                  (and return-date (date<=? start-date return-date))))
     (send book enable #t)))
 
@@ -56,7 +46,7 @@
 (define choice   (new choice% [label ""][parent frame][choices CHOICES][callback enable-return-book]))
 (define start-d  (field (λ (nu) (set! *start-date nu))  #t))
 (define return-d (field (λ (nu) (set! *return-date nu)) #f))
-(define book     (new button% [label "Book"][parent frame][callback (compose displayln list)]))
+(define book     (new button% [label "Book"][parent frame][callback (λ _ (displayln "confirmed"))]))
 
 (enable-return-book)
 (send frame show #t)
