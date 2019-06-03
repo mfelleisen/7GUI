@@ -12,8 +12,8 @@
   (define field:num (if (empty? self+evt) 0 (string->number (send (first self+evt) get-value))))
   (when field:num
     (setter field:num)
-    (send C-field set-value (~a *C))
-    (send F-field set-value (~a *F))))
+    (send C-field set-value (~r *C #:precision 4))
+    (send F-field set-value (~r *F #:precision 4))))
 
 (define (field lbl cb) (new text-field% [parent pane] [label lbl] [init-value ""] [callback cb]))
 
