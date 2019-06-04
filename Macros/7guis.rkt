@@ -27,8 +27,7 @@
                 [(set! *count e) #'(begin (set! *count-field e) (f *count-field))]))))
 
          (define frame (new frame% [label Title] [width 200] [height 77]))
-         (define pane  (new horizontal-pane% [parent frame]))
-         (do-visuals names pane visuals)
+         (horizontal-visuals names frame visuals)
          (send frame show #t))]))
 
 (define-for-syntax (retrieve-ids stx)
@@ -38,11 +37,16 @@
           [(#:id name . stuff) (cons #'name (loop (cdr stx)))]
           [_ (loop (cdr stx))]))))
        
-(define-syntax (do-visuals stx)
+(define-syntax (horizontal-visuals stx)
   (syntax-parse stx 
     [(_ (name ...) frame (gui-specs ...))
-     #:with optionally-named-gui-elements (make-gui-elements #'frame #'(gui-specs ...))
-     #'(define-values (name ...) (let* optionally-named-gui-elements (values name ...)))]))
+     #:do ((define horizontal #'(new horizontal-pane% [parent frame])))
+     #:with pane #'pane
+     #:with optionally-named-gui-elements (make-gui-elements #'pane #'(gui-specs ...))
+     #`(define-values (name ...)
+         (let ([pane #,horizontal])
+           (let* optionally-named-gui-elements
+             (values name ...))))]))
 
 (define-for-syntax (make-gui-elements frame gui-specs)
   (let loop ((gui-specs (syntax->list gui-specs)))
@@ -53,6 +57,3 @@
            (cons #`[x (new gui-element [parent #,frame] . options)] (loop (cdr gui-specs)))]
           [[gui-element:id . options]
            (cons #`[y (new gui-element [parent #,frame] . options)] (loop (cdr gui-specs)))]))))
-
-
-         
