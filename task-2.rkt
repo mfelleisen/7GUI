@@ -6,24 +6,25 @@
 (define *C 0)
 (define *F 0)
 
-(define-syntax-rule (flow *from --> *to) (λ (x) (set!-values (*from *to) (values x (--> x)))))
+(define ((callback setter) field _evt)
+  (send field set-field-background (make-object color% "white"))
+  (define field:num (string->number (send field get-value)))
+  (if field:num (setter field:num) (send field set-field-background (make-object color% "red"))))
 
-(define ((callback setter) . self+evt)
-  (define field:num (if (empty? self+evt) 0 (string->number (send (first self+evt) get-value))))
-  (when field:num
-    (setter field:num)
-    (send C-field set-value (~r *C #:precision 4))
-    (send F-field set-value (~r *F #:precision 4))))
+(define-syntax-rule (flow *from --> *to to-field)
+  (λ (x)
+    (set!-values (*from *to) (values x (--> x)))
+    (send to-field set-value (~r *to #:precision 4))))
 
-(define (field lbl cb) (new text-field% [parent pane] [label lbl] [init-value ""] [callback cb]))
-
-(define celsius->fahrenheit (callback (flow *C (λ (c) (+ (* c 9/5) 32)) *F)))
-(define fahrenheit->celsius (callback (flow *F (λ (f) (* (- f 32) 5/9)) *C)))
+(define celsius->fahrenheit (callback (flow *C (λ (c) (+  (* c 9/5) 32)) *F F-field)))
+(define fahrenheit->celsius (callback (flow *F (λ (f) (* (- f 32) 5/9))  *C C-field)))
 
 (define frame   (new frame% [label "temperature converter"]))
 (define pane    (new horizontal-pane% [parent frame]))
-(define C-field (field "celsius:"       celsius->fahrenheit))
-(define F-field (field " = fahrenheit:" fahrenheit->celsius))
+(define (field v0 lbl cb)
+  (new text-field% [parent pane][min-width 199][label lbl][init-value v0][callback cb]))
+(define C-field (field  "0" "celsius:"       celsius->fahrenheit))
+(define F-field (field  "0" " = fahrenheit:" fahrenheit->celsius))
 
-(celsius->fahrenheit)
+(celsius->fahrenheit C-field 'start-me-up)
 (send frame show #t)
