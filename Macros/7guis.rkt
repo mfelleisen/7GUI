@@ -1,22 +1,20 @@
 #lang racket/gui
 
 (provide
-
  ;; SYNTAX
- #; (gui Title (state:id state:expr propagate:expr) gui-elements ...)
-
+ #; (gui Title (state:id state:expr propagate:expr) gui-spec-elements ...)
  gui)
 
+;; ---------------------------------------------------------------------------------------------------
 (require (for-syntax syntax/parse))
 (require (for-syntax racket/syntax))
 
+;; ---------------------------------------------------------------------------------------------------
 (define-syntax (gui stx)
   (syntax-parse stx 
     [(_ Title {(state:id state0:expr f:expr) ...} visuals)
-
      #:with names (retrieve-ids #'visuals)
      #:with (state-field ...) (generate-temporaries #'(state ...))
-     
      #'(begin
          (define-values (state-field ...) (values state0 ...))
          (define-getter/setter (state state-field f) ...)
@@ -42,7 +40,7 @@
         (syntax-parse (car stx)
           [(#:id name . stuff) (cons #'name (loop (cdr stx)))]
           [_ (loop (cdr stx))]))))
-       
+
 (define-syntax (horizontal-visuals stx)
   (syntax-parse stx 
     [(_ (name ...) frame (gui-specs ...))
@@ -54,12 +52,17 @@
            (let* optionally-named-gui-elements
              (values name ...))))]))
 
-(define-for-syntax (make-gui-elements frame gui-specs)
+(begin-for-syntax
+  (define-syntax-class field+value-expr
+    #:description "name and value binding"
+    (pattern (x:id e:expr))))
+
+(define-for-syntax (make-gui-elements parent gui-specs)
   (let loop ((gui-specs (syntax->list gui-specs)))
     (if (null? gui-specs)
         '()
         (syntax-parse (car gui-specs)
-          [[#:id x:id gui-element:id . options]
-           (cons #`[x (new gui-element [parent #,frame] . options)] (loop (cdr gui-specs)))]
-          [[gui-element:id . options]
-           (cons #`[y (new gui-element [parent #,frame] . options)] (loop (cdr gui-specs)))]))))
+          [[#:id x:id gui-element:id option:field+value-expr ...]
+           (cons #`[x (new gui-element [parent #,parent] option ...)] (loop (cdr gui-specs)))]
+          [[gui-element:id option:field+value-expr ...]
+           (cons #`[y (new gui-element [parent #,parent] option ...)] (loop (cdr gui-specs)))]))))
