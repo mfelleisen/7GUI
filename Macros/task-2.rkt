@@ -10,7 +10,8 @@
     (define field:num (string->number (send field get-value)))
     (if field:num (setter field:num) (send field set-field-background (make-object color% "red")))))
 
-(define-syntax-rule (flow *from --> *to) (λ (x) (set!-values (*from *to) (values x (--> x)))))
+(define-syntax-rule (flow *from --> *to)
+  (λ (x) (unless (= *from x) (set!-values (*from *to) (values x (--> x))))))
 
 (define ((propagate to-field) x)
   (send to-field set-field-background (make-object color% "white"))
