@@ -15,7 +15,7 @@ was doing. (To my surprise, I never had to resort to unit testing.)
 
 To install, 
 ```
-$ raco pkg install git@...
+$ raco pkg install https://github.com/mfelleisen/7GUI.git 
 ```
 
 To run in a shell, 
