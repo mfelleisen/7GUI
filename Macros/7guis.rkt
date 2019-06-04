@@ -8,27 +8,33 @@
  gui)
 
 (require (for-syntax syntax/parse))
+(require (for-syntax racket/syntax))
 
 (define-syntax (gui stx)
   (syntax-parse stx 
-    [(_ Title (*count state0 f) visuals)
+    [(_ Title {(state:id state0:expr f:expr) ...} visuals)
 
      #:with names (retrieve-ids #'visuals)
+     #:with (state-field ...) (generate-temporaries #'(state ...))
      
      #'(begin
-
-         (define *count-field 0)
-
-         (define-syntax *count
-           (make-set!-transformer
-            (lambda (stx) 
-              (syntax-case stx ()
-                [*count (identifier? #'*count) #'*count-field]
-                [(set! *count e) #'(begin (set! *count-field e) (f *count-field))]))))
-
+         (define-values (state-field ...) (values state0 ...))
+         (define-getter/setter (state state-field f) ...)
          (define frame (new frame% [label Title] [width 200] [height 77]))
          (horizontal-visuals names frame visuals)
          (send frame show #t))]))
+
+(define-syntax (define-getter/setter stx)
+  (syntax-parse stx 
+    [(_ (state state-field f) ...)
+     #'(begin
+         (define-syntax state
+           (make-set!-transformer
+            (lambda (stx) 
+              (syntax-case stx ()
+                [state (identifier? #'state) #'state-field]
+                [(set! state e) #'(begin (set! state-field e) (f state-field))]))))
+         ...)]))
 
 (define-for-syntax (retrieve-ids stx)
   (let loop ([stx (syntax->list stx)])

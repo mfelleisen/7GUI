@@ -14,6 +14,7 @@
 (define-syntax-rule (flow *from --> *to to-field)
   (λ (x)
     (set!-values (*from *to) (values x (--> x)))
+    (send to-field set-field-background (make-object color% "white"))
     (send to-field set-value (~r *to #:precision 4))))
 
 (define celsius->fahrenheit (callback (flow *C (λ (c) (+  (* c 9/5) 32)) *F F-field)))
