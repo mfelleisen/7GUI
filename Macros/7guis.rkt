@@ -47,9 +47,11 @@
   (syntax-parse stx
     [(_ frame-name:id Title:expr {(state:id state0:expr f:expr) ...} visuals:gui-element ...)
      #:with (state-field ...) (generate-temporaries #'(state ...))
+     #:with (g ...) (generate-temporaries #'(f ...))
      #'(begin
+         (define-values (g ...) (values f ...))
          (define-values (state-field ...) (values state0 ...))
-         (define-getter/setter (state state-field f) ...)
+         (define-getter/setter (state state-field g) ...)
          (define frame-name (new frame% [label Title] [width 200] [height 77]))
          (define pane (new vertical-pane% [parent frame-name]))
          (setup-visuals pane (visuals))
@@ -70,8 +72,8 @@
            (make-set!-transformer
             (lambda (stx) 
               (syntax-case stx ()
-                [state (identifier? #'state) #'state-field]
-                [(set! state e) #'(begin (set! state-field e) (f state-field))]))))
+                [x (identifier? #'x) #'state-field]
+                [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
          ...)]))
 
 (define-for-syntax (retrieve-ids stx)
