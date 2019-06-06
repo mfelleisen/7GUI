@@ -27,9 +27,10 @@
     (send timer stop)
     (set! *duration new-duration)))
 
+{define-state *elapsed 0 elapsed-cb}    ;; INTERVAL/1000 ms accumulated elapsed time
+[define-state *duration 0 duration-cb]  ;; INTERVAL/1000 ms set duration interval 
+
 (gui "Timer"
-     {[*elapsed  0 elapsed-cb]    ;; INTERVAL/1000 ms accumulated elapsed time
-      [*duration 0 duration-cb]}  ;; INTERVAL/1000 ms set duration interval 
      (#:id elapsed gauge% [label "elapsed"][enabled #f][range 100])
      (#:id text text-field% [init-value "0"][label ""])
      (slider% [label "duration"][min-value 0][max-value 100][callback slider-cb])

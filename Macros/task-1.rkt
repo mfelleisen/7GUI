@@ -2,8 +2,8 @@
 
 (require 7GUI/Macros/7guis)
 
-(define (inc-counter . x) (set! *count (+ 1 *count)))
+(define-state *count 0 (lambda (x) (send display set-value (~a x))))
 
-(gui "Counter" {(*count 0 (lambda (x) (send display set-value (~a x))))}
+(gui "Counter" 
      ((#:id display text-field% [label ""][init-value "0"][enabled #f][min-width 100])
-      (button% [label "Count"][callback inc-counter])))
+      (button% [label "Count"][callback (λ _ (set! *count (+ 1 *count)))])))

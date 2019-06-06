@@ -19,12 +19,16 @@
 (define RED     (make-object color% "red"))
 (define WHITE   (make-object color% "white"))
 
-(define (enable-book (start-date *start:date))
+(define (enable-book . _)
   (send book enable #f)
-  (when (and start-date (date<=? (today) start-date)
+  (when (and *start:date (date<=? (today) *start:date)
              (or (and (string=? ONE *kind-flight))
-                 (and *return:date (date<=? start-date *return:date))))
+                 (and *return:date (date<=? *start:date *return:date))))
     (send book enable #t)))
+
+(define-state *kind-flight ONE (λ (kf) (send return-date enable (string=? RETURN kf)) (enable-book)))
+(define-state *start:date  (to-date DATE0) enable-book)
+(define-state *return:date (to-date DATE0) enable-book)
 
 (define date-field%
   (class text-field%
@@ -33,13 +37,10 @@
       (define date (to-date (send self get-value)))
       (cond
         [date (send self set-field-background WHITE) (setter! date)]
-        [else (send self set-field-background RED)   (enable-book #f)]))
+        [else (send self set-field-background RED)   (send book enable #f)]))
     (super-new [label ""][init-value DATE0][enabled enabled] [callback field-cb])))
 
 (gui "Flight Booker"
-     {(*kind-flight ONE (λ (kf) (send return-date enable (string=? RETURN kf)) (enable-book)))
-      (*start:date  (to-date DATE0)  (λ _ (enable-book)))
-      (*return:date (to-date DATE0)  (λ _ (enable-book)))}  
      (choice% [label ""][choices CHOICES]
               [callback (λ (it _) (set! *kind-flight (list-ref CHOICES (send it get-selection))))])
      (#:id start-date  date-field% (setter! (λ (nu) (set! *start:date nu)))  (enabled #t))

@@ -13,15 +13,17 @@
 (define-syntax-rule (flow *from --> *to)
   (λ (x) (unless (= *from x) (set!-values (*from *to) (values x (--> x))))))
 
-(define ((propagate-to field) x)
-  (send field set-field-background (make-object color% "white"))
-  (send field set-value (~r x #:precision 4)))
-
 (define celsius->fahrenheit (callback (flow *C (λ (c) (+ (* c 9/5) 32)) *F)))
 (define fahrenheit->celsius (callback (flow *F (λ (f) (* (- f 32) 5/9)) *C)))
 
 (define temp-field% (class text-field% (super-new [min-width 200])))
 
-(gui "Temperature Converter" {(*C 0 (propagate-to C-field)) (*F 32 (propagate-to F-field))}
+(gui "Temperature Converter" 
      ((#:id F-field temp-field% [init-value "32"][label "fahrenheit:"][callback fahrenheit->celsius])
       (#:id C-field temp-field% [init-value "0"][label "celsius:"][callback celsius->fahrenheit])))
+
+(define ((propagate-to field) x)
+  (send field set-field-background (make-object color% "white"))
+  (send field set-value (~r x #:precision 4)))
+
+(define-state* (*C 0 (propagate-to C-field)) (*F 32 (propagate-to F-field)))

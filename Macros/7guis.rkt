@@ -1,14 +1,24 @@
 #lang racket/gui
 
 (provide
+
  ;; SYNTAX
- #; (define-gui name:id Title:expr (state:id state:expr propagate:expr) gui-spec)
+ #; (define-state state:id state0:expr propagate:expr)
  ;; -- defines (define state state0) ...
  ;; -- re-defines set! for state ... so that any changes to state ... invoke propagate ...
+
+ define-state
+
+ #; (define-state* (state:id state0:expr propagate:expr) ...)
+ ;; (define-state state state0 propagate) ...
+ define-state*
+ 
+ ;; SYNTAX
+ #; (define-gui name:id Title:expr gui-spec)
  ;; -- defines name to be a frame-based GUI according to the gui-spec
  ;; 
  #; {gui-spec    == (gui-element ...)
-     gui-element == (#:id x:id g:expr [l:id l0:expr] ...)
+                 gui-element == (#:id x:id g:expr [l:id l0:expr] ...)
                  || (g:expr [l:id l0:expr] ...) }
  ;; a gui-element creates a widget using (new g [l l0] ...);
  ;; if an element comes with a #:id x, it is given the name x with the same scope as name
@@ -23,6 +33,32 @@
 (require (for-syntax racket/syntax))
 
 ;; ---------------------------------------------------------------------------------------------------
+(define-syntax (define-state* stx)
+  (syntax-parse stx
+    [(_ (state:id state0:expr f:expr) ...) #'(begin (define-state state state0 f) ...)]))
+
+(define-syntax (define-state stx)
+  (syntax-parse stx
+    [(_ state:id state0:expr f:expr)
+     #:with (state-field) (generate-temporaries #'(state))
+     #:with (g) (generate-temporaries #'(f))
+     #'(begin
+        (define g f)
+        (define state-field state0)
+        (define-getter/setter (state state-field g)))]))
+
+(define-syntax (define-getter/setter stx)
+  (syntax-parse stx 
+    [(_ (state state-field f) ...)
+     #'(begin
+         (define-syntax state
+           (make-set!-transformer
+            (lambda (stx) 
+              (syntax-case stx ()
+                [x (identifier? #'x) #'state-field]
+                [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
+         ...)]))
+
 (begin-for-syntax
   
   (define-syntax-class field+value-expr
@@ -40,41 +76,20 @@
 
 (define-syntax (gui stx)
   (syntax-parse stx
-    [(_ Title:expr {(state:id state0:expr f:expr) ...} visuals ...)
-     #'(begin (define-gui frame Title {(state state0 f) ...} visuals ...) (send frame show #t))]))
+    [(_ Title:expr visuals ...) #'(begin (define-gui frame Title visuals ...) (send frame show #t))]))
 
 (define-syntax (define-gui stx)
   (syntax-parse stx
-    [(_ frame-name:id Title:expr {(state:id state0:expr f:expr) ...} visuals:gui-element ...)
-     #:with (state-field ...) (generate-temporaries #'(state ...))
-     #:with (g ...) (generate-temporaries #'(f ...))
+    [(_ frame-name:id Title:expr visuals:gui-element ...)
      #'(begin
-         (define-values (g ...) (values f ...))
-         (define-values (state-field ...) (values state0 ...))
-         (define-getter/setter (state state-field g) ...)
          (define frame-name (new frame% [label Title] [width 200] [height 77]))
          (define pane (new vertical-pane% [parent frame-name]))
          (setup-visuals pane (visuals))
          ...)]
-    [(_ frame-name:id Title:expr {(state:id state0:expr f:expr) ...} visuals:gui-spec)
-     #:with (state-field ...) (generate-temporaries #'(state ...))
+    [(_ frame-name:id Title:expr  visuals:gui-spec)
      #'(begin
-         (define-values (state-field ...) (values state0 ...))
-         (define-getter/setter (state state-field f) ...)
          (define frame-name (new frame% [label Title] [width 200] [height 77]))
          (setup-visuals frame-name visuals))]))
-
-(define-syntax (define-getter/setter stx)
-  (syntax-parse stx 
-    [(_ (state state-field f) ...)
-     #'(begin
-         (define-syntax state
-           (make-set!-transformer
-            (lambda (stx) 
-              (syntax-case stx ()
-                [x (identifier? #'x) #'state-field]
-                [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
-         ...)]))
 
 (define-for-syntax (retrieve-ids stx)
   (let loop ([stx (syntax->list stx)])
