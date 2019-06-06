@@ -130,7 +130,7 @@
     (super-new [label ""][min-value 10][max-value 100][callback (λ _ (update (get-value)))])))
 
 ;; ---------------------------------------------------------------------------------------------------
-(define frame  (new frame% [label "CRUD"][width 400]))
+(define frame  (new frame% [label "Circle Drawer"][width 400]))
 (define hpane1 (new horizontal-pane% [parent frame][min-height 20][alignment '(center center)]))
 (new button% [label "Undo"][parent hpane1][callback (λ _ (undo) (send canvas on-paint))])
 (new button% [label "Redo"][parent hpane1][callback (λ _ (redo) (send canvas on-paint))])
