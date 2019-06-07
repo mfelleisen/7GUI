@@ -31,6 +31,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (require (for-syntax syntax/parse))
 (require (for-syntax racket/syntax))
+(require (for-syntax racket/list))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-syntax (define-state* stx)
@@ -43,9 +44,9 @@
      #:with (state-field) (generate-temporaries #'(state))
      #:with (g) (generate-temporaries #'(f))
      #'(begin
-        (define g f)
-        (define state-field state0)
-        (define-getter/setter (state state-field g)))]))
+         (define g f)
+         (define state-field state0)
+         (define-getter/setter (state state-field g)))]))
 
 (define-syntax (define-getter/setter stx)
   (syntax-parse stx 
@@ -68,6 +69,7 @@
   (define-syntax-class gui-element
     #:description "gui element specification"
     (pattern (#:id x:id widget:expr fv:field+value-expr ...))
+    (pattern (#:horizontal ge:gui-element ...))
     (pattern (widget:expr fv:field+value-expr ...)))
 
   (define-syntax-class gui-spec
@@ -76,46 +78,36 @@
 
 (define-syntax (gui stx)
   (syntax-parse stx
-    [(_ Title:expr visuals ...) #'(begin (define-gui frame Title visuals ...) (send frame show #t))]))
+    [(_ (~optional (~seq #:frame f)) T Vs ...)
+     #'(begin (define-gui frame (~? (~@ #:frame f) (~@)) T Vs ...) (send frame show #t))]))
 
 (define-syntax (define-gui stx)
   (syntax-parse stx
-    [(_ frame-name:id Title:expr visuals:gui-element ...)
+    [(_ frame-name:id (~optional (~seq #:frame f%:expr)) Title:expr visuals:gui-element ...)
      #'(begin
-         (define frame-name (new frame% [label Title] [width 200] [height 77]))
+         (define frame-name (new (~? f% frame%) [label Title] [width 200] [height 77]))
          (define pane (new vertical-pane% [parent frame-name]))
          (setup-visuals pane (visuals))
          ...)]
-    [(_ frame-name:id Title:expr  visuals:gui-spec)
-     #'(begin
-         (define frame-name (new frame% [label Title] [width 200] [height 77]))
-         (setup-visuals frame-name visuals))]))
 
-(define-for-syntax (retrieve-ids stx)
-  (let loop ([stx (syntax->list stx)])
-    (if (null? stx) '()
-        (syntax-parse (car stx)
-          [(#:id name . stuff) (cons #'name (loop (cdr stx)))]
-          [_ (loop (cdr stx))]))))
+    [(_ frame-name:id (~optional (~seq #:frame f%:expr)) Title:expr visuals:gui-spec)
+     #'(begin
+         (define frame-name (new (~? f% frame%) [label Title] [width 200] [height 77]))
+         (setup-visuals frame-name visuals))]))
 
 (define-syntax (setup-visuals stx)
   (syntax-parse stx 
     [(_ container (gui-specs ...))
-     #:with (name ...) (retrieve-ids #'(gui-specs ...))
-     #:do ((define horizontal #'(new  horizontal-pane% [parent container])))
-     #:with pane #'pane
-     #:with optionally-named-gui-elements (make-gui-elements #'pane #'(gui-specs ...))
-     #`(define-values (name ...)
-         (let ([pane #,horizontal])
-           (let* optionally-named-gui-elements
-             (values name ...))))]))
+     #`(begin
+         (define pane (new  horizontal-pane% [parent container]))
+         (make-gui-element pane gui-specs) ...)]))
 
-(define-for-syntax (make-gui-elements parent gui-specs)
-  (let loop ((gui-specs (syntax->list gui-specs)))
-    (if (null? gui-specs)
-        '()
-        (syntax-parse (car gui-specs)
-          [[#:id x:id gui-element:id option:field+value-expr ...]
-           (cons #`[x (new gui-element [parent #,parent] option ...)] (loop (cdr gui-specs)))]
-          [[gui-element:id option:field+value-expr ...]
-           (cons #`[y (new gui-element [parent #,parent] option ...)] (loop (cdr gui-specs)))]))))
+(define-syntax (make-gui-element stx)
+  (syntax-parse stx
+    [(_ p (#:horizontal b ...))
+     #'(begin (define horizontal (new horizontal-pane% [parent p]))
+              (make-gui-element horizontal b) ...)]
+    [(_ p [#:id x:id gui-element:id option:field+value-expr ...])
+     #`[define x (new gui-element [parent p] option ...)]]
+    [(_ p [gui-element:id option:field+value-expr ...])
+     #`[define y (new gui-element [parent p] option ...)]]))

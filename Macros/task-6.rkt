@@ -81,16 +81,16 @@
         (define type (send evt get-event-type))
         (set! *x (send evt get-x))
         (set! *y (send evt get-y))
-        (cond
-          [(eq? 'leave type) (set! *x #f)]
-          [(eq? 'enter type) (set! *x 0)]
-          [(and (eq? 'left-down type) (is-empty-area *x *y)) (add-circle! *x *y)]
-          [(and (eq? 'right-down type) (cons? *circles)) (lock) (popup-adjuster this (the-closest *x *y))])))
+        (case type
+          [(leave) (set! *x #f)]
+          [(enter) (set! *x 0)]
+          [(left-down)  (when (is-empty-area *x *y) (add-circle! *x *y))]
+          [(right-down) (when (cons? *circles) (lock) (popup-adjuster this (the-closest *x *y)))])))
     
     (define (paint-callback _self _evt)
       (cond
         [(empty? *circles) (send (send this get-dc) clear)]
-        [(boolean? *x)      (draw-circles #f)]
+        [(boolean? *x)     (draw-circles #f)]
         [else              (draw-circles (the-closest *x *y))]))
     
     (define/public (draw-circles closest (others-without-closest #f))
@@ -102,41 +102,30 @@
 
     (define dc (send this get-dc))))
 
-(define (popup-adjuster closest-circle)
-  (define pm (new popup-menu% [title "adjuster"]))
-  (new menu-item% [parent pm] [label "adjust radius"] [callback (adjuster! closest-circle)])
+(define (popup-adjuster canvas closest-circle)
+  (define pm (new popup-menu% [title "adjuster"][popdown-callback (λ (self _) (send canvas unlock))]))
+  (new menu-item% [parent pm] [label "adjust radius"] [callback (adjuster! canvas closest-circle)])
   (send frame popup-menu pm  100 100))
 
 (define ((adjuster! canvas closest-circle) . x)
-  (define d0 (circle-d closest-circle))
-  (define frame (new adjuster-dialog% [canvas canvas][closest-circle closest-circle]))
-  (new adjuster-slider% [parent frame][init-value d0][update (λ (x) (send frame continuous x))])
-  (send frame show #t))
-
-(define adjuster-dialog%
-  (class frame% (init-field canvas closest-circle)
-    (match-define (circle x* y* *d _a) closest-circle)
-    (define others (remq closest-circle *circles))
-    
-    (define/public (continuous new-d) ;; resize locally while adjusting 
-      (set! *d new-d)
-      (send canvas draw-circles (circle x* y* *d '_dummy_) others))
-    
-    (define/augment (on-close) ;; resize globally 
-      (send canvas unlock)
-      (resize! closest-circle *d))
-
-    (super-new [label (format "Adjust radius of circle at (~a,~a)" x* y*)])))
-
-(define adjuster-slider%
-  (class slider% (init-field update)
-    (inherit get-value)
-    (super-new [label ""][min-value 10][max-value 100][callback (λ _ (update (get-value)))])))
+  (match-define (circle x0 y0 d0 _a) closest-circle)
+  (define others (remq closest-circle *circles))
+  (define-state *d d0 (λ (d) (send canvas draw-circles (circle x0 y0 d '_ephemeral_) others)))
+  
+  (define adjuster-dialog%
+    (class frame%
+      (define/augment (on-close) (send canvas unlock) (resize! closest-circle *d))
+      (super-new)))
+  
+  (gui #:frame adjuster-dialog% (format "Adjust radius of circle at (~a,~a)" x0 y0)
+       (slider% [init-value d0] [label ""] [min-value 10] [max-value 100]
+                [callback (λ (this _) (set! *d (send this get-value)))])))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-gui frame "Circle Drawer"
-  (button% [label "Undo"][callback (λ _ (undo))])
-  (button% [label "Redo"][callback (λ _ (redo))])
+  (#:horizontal
+   (button% [label "Undo"][callback (λ _ (undo))])
+   (button% [label "Redo"][callback (λ _ (redo))]))
   (#:id canvas circle-canvas% [min-height 400][min-width 400][style '(border)]))
 
 (send frame show #t)
