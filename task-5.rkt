@@ -15,7 +15,7 @@
 (define-syntax-rule (def-! (name x ...) exp) (define (name x ...) (set! *data exp) (data->selected!)))
 (def-! (create-entry new-entry) (append *data (list new-entry)))
 (def-! (update-entry new-entry i) (operate-on i (curry cons new-entry) *data select *selected))
-(def-! (delete-from i) (operate-on i  values)) *data select *selected
+(def-! (delete-from i) (operate-on i  values))
 
 #; {N [[Listof X] -> [Listof X]] [Listof X] [X -> Boolean] [Listof X] -> [Listof X]}
 ;; traverse list to the i-th position of selected in data, then apply operator to rest (efficiency)
