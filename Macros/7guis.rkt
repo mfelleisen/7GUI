@@ -70,6 +70,7 @@
     #:description "gui element specification"
     (pattern (#:id x:id widget:expr fv:field+value-expr ...))
     (pattern (#:horizontal ge:gui-element ...))
+    (pattern (#:vertical ge:gui-element ...))
     (pattern (widget:expr fv:field+value-expr ...)))
 
   (define-syntax-class gui-spec
@@ -100,14 +101,18 @@
     [(_ container (gui-specs ...))
      #`(begin
          (define pane (new  horizontal-pane% [parent container]))
-         (make-gui-element pane gui-specs) ...)]))
+         (gui-element pane gui-specs) ...)]))
 
-(define-syntax (make-gui-element stx)
+(define-syntax (gui-element stx)
   (syntax-parse stx
     [(_ p (#:horizontal b ...))
-     #'(begin (define horizontal (new horizontal-pane% [parent p]))
-              (make-gui-element horizontal b) ...)]
+     #'(begin (define horizontal (make-horizontal p)) (gui-element horizontal b) ...)]
+    [(_ p (#:vertical b ...))
+     #'(begin (define vertical (make-vertical p)) (gui-element vertical b) ...)]
     [(_ p [#:id x:id gui-element:id option:field+value-expr ...])
      #`[define x (new gui-element [parent p] option ...)]]
     [(_ p [gui-element:id option:field+value-expr ...])
      #`[define y (new gui-element [parent p] option ...)]]))
+
+(define (make-horizontal p) (new horizontal-pane% [parent p][alignment '(center center)]))
+(define (make-vertical p) (new vertical-pane% [parent p][alignment '(center center)]))
