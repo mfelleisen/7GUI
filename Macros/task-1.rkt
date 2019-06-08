@@ -1,3 +1,4 @@
+#! /usr/bin/env gracket
 #lang racket/gui
 
 (require 7GUI/Macros/7guis)
