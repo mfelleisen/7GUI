@@ -79,8 +79,8 @@
         (set! *x (send evt get-x))
         (set! *y (send evt get-y))
         (case type
-          [(leave) (set! *x #f)]
-          [(enter) (set! *x 0)]
+          [(leave)      (set! *x #f)]
+          [(enter)      (set! *x 0)]
           [(left-down)  (when (is-empty-area *x *y) (add-circle! *x *y))]
           [(right-down) (when (cons? *circles) (lock) (popup-adjuster this (the-closest *x *y)))])))
     
