@@ -99,7 +99,8 @@
     (super-new [paint-callback paint-callback])))
 
 (define (popup-adjuster closest-circle)
-  (define pm (new popup-menu% [title "adjuster"]))
+  (define (cb _ evt)(when (eq? (send evt get-event-type) 'menu-popdown-none) (send canvas unlock)))
+  (define pm (new popup-menu% [title "adjuster"][popdown-callback cb]))
   (new menu-item% [parent pm] [label "adjust radius"] [callback (adjuster! closest-circle)])
   (send frame popup-menu pm  100 100))
 
