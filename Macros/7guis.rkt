@@ -86,16 +86,16 @@
 
 (define-syntax (gui stx)
   (syntax-parse stx
-    [(_ (~optional (~seq #:frame f)) T Vs ...)
-     #'(begin (define-gui frame (~? (~@ #:frame f) (~@)) T Vs ...) (send frame show #t))]))
+    [(_ (~optional (~seq #:id x:id)) (~optional (~seq #:frame f)) T Vs ...)
+     #'(begin (define-gui (~? x F) (~? (~@ #:frame f) (~@)) T Vs ...) (send (~? x F) show #t))]))
 
 (define-syntax (define-gui stx)
   (syntax-parse stx
-    [(_ frame-name:id (~optional (~seq #:frame f%:expr)) Title:expr visuals:gui-element ...)
+    [(_ frame-name:id (~optional (~seq #:frame f%:expr)) T:expr Vs:gui-element ...)
      #'(begin
-         (define frame-name (new (~? f% frame%) [label Title] [width 200] [height 77]))
+         (define frame-name (new (~? f% frame%) [label T] [width 200] [height 77]))
          (define pane (new vertical-pane% [parent frame-name]))
-         (setup-visuals pane (visuals))
+         (setup-visuals pane (Vs))
          ...)]
 
     [(_ frame-name:id (~optional (~seq #:frame f%:expr)) Title:expr visuals:gui-spec)
