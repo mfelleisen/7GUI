@@ -121,8 +121,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define-gui frame "Circle Drawer"
   (#:horizontal
-   (button% [label "Undo"][callback (λ _ (undo))])
-   (button% [label "Redo"][callback (λ _ (redo))]))
+   (button% [label "Undo"][callback (λ _ (undo))]) (button% [label "Redo"][callback (λ _ (redo))]))
   (#:id canvas circle-canvas% [min-height 400][min-width 400][style '(border)]))
 
 (send frame show #t)

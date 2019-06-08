@@ -1,5 +1,9 @@
 #lang racket/gui
 
+;; TODO
+;; -- stop should become a syn-param and use syntax-parse for set!-transformer
+;; -- unify none and stop? 
+
 (provide
 
  ;; SYNTAX
@@ -26,7 +30,9 @@
 
  #; (gui:id Title:expr (state:id state:expr propagate:expr) gui-spec)
  ;; like define-gui, but immediately shows the constructed frame 
- gui)
+ gui
+
+ none)
 
 ;; ---------------------------------------------------------------------------------------------------
 (require (for-syntax syntax/parse))
@@ -55,8 +61,9 @@
          (define-syntax state
            (make-set!-transformer
             (lambda (stx) 
-              (syntax-case stx ()
+              (syntax-case stx (stop)
                 [x (identifier? #'x) #'state-field]
+                [(set! x (stop e)) #'(begin (set! state-field e))]
                 [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
          ...)]))
 
@@ -68,10 +75,10 @@
 
   (define-syntax-class gui-element
     #:description "gui element specification"
-    (pattern (#:id x:id widget:expr fv:field+value-expr ...))
+    (pattern ((~optional (~seq #:id x:id))
+              widget:expr (~optional (~seq #:change s:id f:expr)) fv:field+value-expr ...))
     (pattern (#:horizontal ge:gui-element ...))
-    (pattern (#:vertical ge:gui-element ...))
-    (pattern (widget:expr fv:field+value-expr ...)))
+    (pattern (#:vertical ge:gui-element ...)))
 
   (define-syntax-class gui-spec
     #:description "gui specification"
@@ -96,12 +103,8 @@
          (define frame-name (new (~? f% frame%) [label Title] [width 200] [height 77]))
          (setup-visuals frame-name visuals))]))
 
-(define-syntax (setup-visuals stx)
-  (syntax-parse stx 
-    [(_ container (gui-specs ...))
-     #`(begin
-         (define pane (new  horizontal-pane% [parent container]))
-         (gui-element pane gui-specs) ...)]))
+(define-syntax-rule (setup-visuals container (gui-specs ...))
+  (gui-element container (#:horizontal gui-specs ...)))
 
 (define-syntax (gui-element stx)
   (syntax-parse stx
@@ -109,10 +112,20 @@
      #'(begin (define horizontal (make-horizontal p)) (gui-element horizontal b) ...)]
     [(_ p (#:vertical b ...))
      #'(begin (define vertical (make-vertical p)) (gui-element vertical b) ...)]
-    [(_ p [#:id x:id gui-element:id option:field+value-expr ...])
-     #`[define x (new gui-element [parent p] option ...)]]
-    [(_ p [gui-element:id option:field+value-expr ...])
-     #`[define y (new gui-element [parent p] option ...)]]))
+    [(_ p [(~optional (~seq #:id x:id))
+           gui-element:id (~optional (~seq #:change s:id f:expr)) option:field+value-expr ...])
+     #`(begin
+         (~? (~@ (define g f)) (~@))
+         [define (~? x y) (new gui-element [parent p]
+                               (~? (~@ [callback
+                                        (λ _
+                                          (define new (g s))
+                                          (unless (*none? new) (set! s new)))])
+                                   (~@))
+                               option ...)])]))
+
+(struct *none ())
+(define none (*none))
 
 (define (make-horizontal p) (new horizontal-pane% [parent p][alignment '(center center)]))
 (define (make-vertical p) (new vertical-pane% [parent p][alignment '(center center)]))

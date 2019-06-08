@@ -30,19 +30,18 @@
 (define-state *start:date  (to-date DATE0) enable-book)
 (define-state *return:date (to-date DATE0) enable-book)
 
-(define date-field%
-  (class text-field%
-    (init setter! enabled)
-    (define (field-cb self _evt)
-      (define date (to-date (send self get-value)))
-      (cond
-        [date (send self set-field-background WHITE) (setter! date)]
-        [else (send self set-field-background RED)   (send book enable #f)]))
-    (super-new [label ""][init-value DATE0][enabled enabled] [callback field-cb])))
+(define date-field% (class text-field% (init e) (super-new [label ""][init-value DATE0][enabled e])))
+
+(define-syntax-rule (check-date field)
+  (λ (old)
+    (define date (to-date (send field get-value)))
+    (cond
+      [date (send field set-field-background WHITE) date]
+      [else (send field set-field-background RED)   (send book enable #f) none])))
 
 (gui "Flight Booker"
-     (choice% [label ""][choices CHOICES]
-              [callback (λ (it _) (set! *kind-flight (list-ref CHOICES (send it get-selection))))])
-     (#:id start-date  date-field% (setter! (λ (nu) (set! *start:date nu)))  (enabled #t))
-     (#:id return-date date-field% (setter! (λ (nu) (set! *return:date nu))) (enabled #f))
+     (#:id kind choice% #:change *kind-flight (λ _ (list-ref CHOICES (send kind get-selection)))
+      [label ""][choices CHOICES])
+     (#:id start-date  date-field% #:change *start:date (check-date start-date) (e #t))
+     (#:id return-date date-field% #:change *return:date (check-date return-date) (e #f))
      (#:id book button% [label "Book"][enabled #f][callback (λ _ (displayln "confirmed"))]))

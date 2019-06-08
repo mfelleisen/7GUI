@@ -21,17 +21,16 @@
   (define r (if (zero? *duration) 0 (quotient (* 100 *elapsed) *duration)))
   (send elapsed set-value r))
 
-(define (slider-cb self _evt)
-  (define new-duration (send self get-value))
-  (unless (= new-duration *duration)
-    (send timer stop)
-    (set! *duration new-duration)))
-
 {define-state *elapsed 0 elapsed-cb}    ;; INTERVAL/1000 ms accumulated elapsed time
 [define-state *duration 0 duration-cb]  ;; INTERVAL/1000 ms set duration interval 
+
+(define-syntax-rule (from field)
+  (λ (old)
+    (define new-duration (send field get-value))
+    (if (= new-duration *duration) none [begin (send timer stop) new-duration])))
 
 (gui "Timer"
      (#:id elapsed gauge% [label "elapsed"][enabled #f][range 100])
      (#:id text text-field% [init-value "0"][label ""])
-     (slider% [label "duration"][min-value 0][max-value 100][callback slider-cb])
-     (button% [label "reset"][callback (λ _ (send timer stop) (set! *elapsed 0) (duration-cb))]))
+     (#:id s slider% #:change *duration (from s) [label "duration"][min-value 0][max-value 100])
+     (button% #:change *elapsed (λ _ (send timer stop) (begin0 0 (duration-cb))) [label "reset"]))

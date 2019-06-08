@@ -6,4 +6,4 @@
 
 (gui "Counter" 
      ((#:id display text-field% [label ""][init-value "0"][enabled #f][min-width 100])
-      (button% [label "Count"][callback (λ _ (set! *count (+ 1 *count)))])))
+      (button% #:change *count add1 [label "Count"])))
