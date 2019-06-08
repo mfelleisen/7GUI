@@ -67,8 +67,8 @@
 (define circle-canvas%
   (class canvas%
     (define *in-adjuster #f) ;; we can get a quasi-modal dialog this way 
-    (define/public (unlock) (set! *in-adjuster #f))
-    (define/private (lock) (set! *in-adjuster #t))
+    (define/public (unlock) (set! *in-adjuster #f) (displayln 'unlocked))
+    (define/private (lock) (set! *in-adjuster #t) (displayln 'locked))
 
     (define-state *x 0 (λ (x) (send this on-paint)))
     (define-state *y 0 values)
@@ -100,7 +100,8 @@
     (define dc (send this get-dc))))
 
 (define (popup-adjuster canvas closest-circle)
-  (define pm (new popup-menu% [title "adjuster"][popdown-callback (λ (self _) (send canvas unlock))]))
+  (define (cb _ evt)(when (eq? (send evt get-event-type) 'menu-popdown-none) (send canvas unlock)))
+  (define pm (new popup-menu% [title "adjuster"][popdown-callback cb]))
   (new menu-item% [parent pm] [label "adjust radius"] [callback (adjuster! canvas closest-circle)])
   (send frame popup-menu pm  100 100))
 
@@ -113,10 +114,11 @@
     (class frame%
       (define/augment (on-close) (send canvas unlock) (resize! closest-circle *d))
       (super-new)))
+
+  (define a-slider% (class slider% (super-new [label ""] [min-value 10] [max-value 100])))
   
   (gui #:frame adjuster-dialog% (format "Adjust radius of circle at (~a,~a)" x0 y0)
-       (slider% [init-value d0] [label ""] [min-value 10] [max-value 100]
-                [callback (λ (this _) (set! *d (send this get-value)))])))
+       (#:id s a-slider% #:change *d (λ (_) (send s get-value)) [init-value d0])))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-gui frame "Circle Drawer"
