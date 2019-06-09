@@ -9,74 +9,89 @@
 (define LETTERS  "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 ;; -----------------------------------------------------------------------------
-;; FORMULAS and EXPRESSIONS
-#; {Index      : N in [0,99]}
-#; {Reference  is a Letter followed by an Index}
-#; {Expression =  Reference || Integer || (+ Expression Expression)}
+(module expressions-and-formulas racket
+  (provide
+   #; {String -> Exp* u False}
+   string->exp*
 
-(struct formula (formula dependents) #:transparent)
-#; {Ref*       =  (List Letter Index)}
-#; {Exp*       =  Ref* || (list '+ Exp* Exp*)}
-#; {Formula    =  [formula Exp* || Number || (Setof Ref*)]}
+   #; {Exp* u False -> String}
+   exp*->string
 
-(define (render-exp* exp*)
-  (if (boolean? exp*)
-      ""
-      (let render-exp* ((exp* exp*))
-        (match exp*
-          [(? number?) (~a exp*)]
-          [(list letter index) (~a letter index)]
-          [(list '+ left right) (format "(+ ~a ~a)" (render-exp* left) (render-exp* right))]))))
+   #; {Exp* -> (Listof Ref*)}
+   depends-on
 
-#; {Exp* -> (Listof Ref*)}
-(define (dependents exp*)
-  (let loop ([exp* exp*][accumulator (set)])
-    (match exp*
-      [(? number?) accumulator]
-      [(list L I) (set-add accumulator exp*)]
-      [(list '+ left right) (loop left (loop right accumulator))])))
+   #;{ Exp* [Hashof Ref* Integer]  -> Integer}
+   evaluate)
 
-#;{ Exp* -> Integer}
-(define (evaluate-exp exp*)
-  (let loop ([exp* exp*])
-    (match exp*
-      [(? number?) exp*]
-      [(list L I) (get-content L I)]
-      [(list '+ left right) (+ (loop left) (loop right))])))
+  ;; EXPRESSIONS: EXTERNAL, STRING-BASED REPRESENTATION 
+  #; {Index      : N in [0,99]}
+  #; {Reference  is a Letter followed by an Index}
+  #; {Expression =  Reference || Integer || (+ Expression Expression)}
 
-(define (valid-formula x)
-  (define ip (open-input-string x))
-  (define y (read ip))
-  (and (eof-object? (read ip))
-       (let loop ([y y])
-         (match y
-           [(? valid-cell) (valid-cell y)]
-           [(? integer?) y]
-           [(list '+ y1 y2) (list '+ (loop y1) (loop y2))]
-           [else #f]))))
+  ;; EXPRESSIONS: INTERNAL 
+  #; {Ref*       =  (List Letter Index)}
+  #; {Exp*       =  Ref*      || Integer || (list '+ Exp* Exp*)}
+  
+  (define (string->exp* x)
+    (define ip (open-input-string x))
+    (define y (read ip))
+    (and (eof-object? (read ip))
+         (let loop ([y y])
+           (match y
+             [(? valid-cell) (valid-cell y)]
+             [(? integer?) y]
+             [(list '+ y1 y2) (list '+ (loop y1) (loop y2))]
+             [else #f]))))
+  
+  (define (exp*->string exp*)
+    (if (boolean? exp*)
+        ""
+        (let render-exp* ((exp* exp*))
+          (match exp*
+            [(? number?) (~a exp*)]
+            [(list letter index) (~a letter index)]
+            [(list '+ left right) (format "(+ ~a ~a)" (render-exp* left) (render-exp* right))]))))
+  
+  (define (depends-on exp*)
+    (let loop ([exp* exp*][accumulator (set)])
+      (match exp*
+        [(? number?) accumulator]
+        [(list L I) (set-add accumulator exp*)]
+        [(list '+ left right) (loop left (loop right accumulator))])))
+  
+  (define (evaluate exp* global-env)
+    (let loop ([exp* exp*])
+      (match exp*
+        [(? number?) exp*]
+        [(list L I) (hash-ref global-env exp* 0)]
+        [(list '+ left right) (+ (loop left) (loop right))])))
 
-(define (valid-cell x:sym)
-  (and (symbol? x:sym)
-       (let* ([x:str (symbol->string x:sym)]
-              [x (regexp-match #px"([A-Z])(\\d\\d)" x:str)])
-         (or (and x (split x))
-             (let ([x (regexp-match #px"([A-Z])(\\d)" x:str)])
-               (and x (split x)))))))
+  #; {Symbol -> (List Letter Index) u False}
+  (define (valid-cell x:sym)
+    (and (symbol? x:sym)
+         (let* ([x:str (symbol->string x:sym)]
+                [x (regexp-match #px"([A-Z])(\\d\\d)" x:str)])
+           (or (and x (split x))
+               (let ([x (regexp-match #px"([A-Z])(\\d)" x:str)])
+                 (and x (split x)))))))
 
-(define (split x)
-  (match x [(list _ letter index) (list (string-ref letter 0) (string->number index))]))
+  (define (split x)
+    (match x [(list _ letter index) (list (string-ref letter 0) (string->number index))])))
+(require (submod "." expressions-and-formulas))
 
+;; -----------------------------------------------------------------------------
 (define (valid-content x)
   (define n (string->number x))
   (and n (integer? n) n))
-;; -----------------------------------------------------------------------------
 
-(define-syntax-rule (define-getr name (*source selector))
-  (define (name letter index) (selector (hash-ref *source (list letter index) #f))))
+(struct formula (formula dependents) #:transparent)
+#; {Formula    =  [formula Exp* || Number || (Setof Ref*)]}
 
-(define-getr get-exp* (*formulas (λ (x) (if (boolean? x) 0 (formula-formula x)))))
-(define-getr get-dependents (*formulas (λ (x) (if (boolean? x) (set) (formula-dependents x)))))
-(define-getr get-content (*content (λ (x) (or x 0))))
+(define-syntax-rule (iff selector e default) (let ([v e]) (if v (selector v) default)))
+  
+(define (get-exp* L I) (iff formula-formula (hash-ref *formulas (list L I) #f) 0))
+(define (get-dependents L I) (iff formula-dependents (hash-ref *formulas (list L I) #f) (set)))
+(define (get-content L I) (hash-ref *content (list L I) 0))
 
 (define (set-content! letter index vc)
   (define current (get-content letter index))
@@ -89,14 +104,14 @@
   (define dependents (get-dependents letter index))
   (for ((d (in-set dependents)))
     (define exp* (get-exp* (first d) (second d)))
-    (set-content! (first d) (second d) (evaluate-exp exp*))))
+    (set-content! (first d) (second d) (evaluate exp* *content))))
 
 (define-state *content (make-immutable-hash) propagate-content-change) ;; [Hashof Ref* Integer]
 
 (define (set-formula! letter index exp*)
   (define new (formula exp* (get-dependents letter index)))
-  (set! *formulas (list (hash-set *formulas (list letter index) new) letter index (dependents exp*)))
-  (set-content! letter index (evaluate-exp exp*)))
+  (set! *formulas (list (hash-set *formulas (list letter index) new) letter index (depends-on exp*)))
+  (set-content! letter index (evaluate exp* *content)))
 
 (define (propagate-change-to-formulas x)
   (match-define (list new letter index dependents) x)
@@ -219,7 +234,7 @@
                                       (send dialog show #f))))]))))
       
 (define popup-formula-editor
-  (popup-editor "a formula for cell ~a~a" valid-formula set-formula! (compose render-exp* get-exp*)))
+  (popup-editor "a formula for cell ~a~a" string->exp* set-formula! (compose exp*->string get-exp*)))
 
 (define popup-content-editor
   (popup-editor "content for cell ~a~a" valid-content set-content! get-content))
