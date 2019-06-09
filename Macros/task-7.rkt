@@ -7,6 +7,9 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define LETTERS  "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+;; -----------------------------------------------------------------------------
+;; FORMULAS and EXPRESSIONS
 #; {Index      : N in [0,99]}
 #; {Reference  is a Letter followed by an Index}
 #; {Expression =  Reference || Integer || (+ Expression Expression)}
@@ -24,43 +27,6 @@
           [(? number?) (~a exp*)]
           [(list letter index) (~a letter index)]
           [(list '+ left right) (format "(+ ~a ~a)" (render-exp* left) (render-exp* right))]))))
-
-(define *content  (make-immutable-hash)) ;; [Hashof Ref* Integer]
-(define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
-
-(define-syntax-rule (define-getr name (*source selector))
-  (define (name letter index) (selector (hash-ref *source (list letter index) #f))))
-(define ((propagate-false f) x) (and x (f x)))
-
-(define-getr get-exp* (*formulas (propagate-false formula-formula)))
-(define-getr get-dependents (*formulas (propagate-false formula-dependents)))
-(define-getr get-content (*content (λ (x) (or x 0))))
-
-(define (set-content! letter index vc)
-  (define current (get-content letter index))
-  (set! *content (hash-set *content (list letter index) vc))
-  (when (and current (not (= current vc)))
-    (define f (get-dependents letter index))
-    (when f (propagate-to f))))
-
-(define (propagate-to dependents)
-  (for ((d dependents))
-    (define exp* (get-exp* (first d) (second d)))
-    (set-content! (first d) (second d) (evaluate-exp exp*))))
-      
-(define (set-formula! letter index exp*)
-  (define ref*    (list letter index))
-  (define current (get-dependents letter index))
-  (define new     (formula exp* (or current (set))))
-  (set! *formulas (hash-set *formulas ref* new))
-  (register-with-dependents (dependents exp*) ref*)
-  (set-content! letter index (evaluate-exp exp*)))
-
-(define (register-with-dependents dependents ref*)
-  (for ((d (in-set dependents)))
-    (define current (hash-ref *formulas d #f))
-    (match-define (formula f old) (or current (formula 0 (set))))
-    (set! *formulas (hash-set *formulas d (formula f (set-add old ref*))))))
 
 #; {Exp* -> (Listof Ref*)}
 (define (dependents exp*)
@@ -103,6 +69,45 @@
 (define (valid-content x)
   (define n (string->number x))
   (and n (integer? n) n))
+;; -----------------------------------------------------------------------------
+
+(define-syntax-rule (define-getr name (*source selector))
+  (define (name letter index) (selector (hash-ref *source (list letter index) #f))))
+
+(define-getr get-exp* (*formulas (λ (x) (if (boolean? x) 0 (formula-formula x)))))
+(define-getr get-dependents (*formulas (λ (x) (if (boolean? x) (set) (formula-dependents x)))))
+(define-getr get-content (*content (λ (x) (or x 0))))
+
+(define (set-content! letter index vc)
+  (define current (get-content letter index))
+  (when (and current (not (= current vc)))
+    (set! *content (list (hash-set *content (list letter index) vc) letter index current vc))))
+
+(define (propagate-content-change x)
+  (match-define (list new-hash letter index current vc) x)
+  (set! *content (stop new-hash))
+  (define dependents (get-dependents letter index))
+  (for ((d (in-set dependents)))
+    (define exp* (get-exp* (first d) (second d)))
+    (set-content! (first d) (second d) (evaluate-exp exp*))))
+
+(define-state *content (make-immutable-hash) propagate-content-change) ;; [Hashof Ref* Integer]
+
+(define (set-formula! letter index exp*)
+  (define new (formula exp* (get-dependents letter index)))
+  (set! *formulas (list (hash-set *formulas (list letter index) new) letter index (dependents exp*)))
+  (set-content! letter index (evaluate-exp exp*)))
+
+(define (propagate-change-to-formulas x)
+  (match-define (list new letter index dependents) x)
+  (define ref* (list letter index))
+  (set! *formulas (stop new))
+  (for ((d (in-set dependents)))
+    (match-define (list d-let d-ind) d)
+    (define new-deps (set-add (get-dependents d-let d-ind) ref*))
+    (set! *formulas (stop (hash-set *formulas d (formula (get-exp* d-let d-ind) new-deps))))))
+
+(define-state *formulas (make-immutable-hash) propagate-change-to-formulas) ;; [HashOF Ref* Formula] 
 
 ;; ---------------------------------------------------------------------------------------------------
 (define DOUBLE-CLICK-INTERVAL (send (new keymap%) get-double-click-interval))

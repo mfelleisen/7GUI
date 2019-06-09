@@ -2,7 +2,8 @@
 
 ;; TODO
 ;; -- stop should become a syn-param and use syntax-parse for set!-transformer
-;; -- unify none and stop? 
+;; -- unify none and stop?
+;; -- task-7 really needs a better propagation mechanism, for structured content 
 
 (provide
 
