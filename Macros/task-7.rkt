@@ -96,11 +96,9 @@
 (define (set-content! letter index vc)
   (define current (get-content letter index))
   (when (and current (not (= current vc)))
-    (set! *content (list (hash-set *content (list letter index) vc) letter index current vc))))
+    (set! *content (many (list (hash-set *content (list letter index) vc) letter index current vc)))))
 
-(define (propagate-content-change x)
-  (match-define (list new-hash letter index current vc) x)
-  (set! *content (stop new-hash))
+(define (propagate-content-change new-hash letter index current vc)
   (define dependents (get-dependents letter index))
   (for ((d (in-set dependents)))
     (define exp* (get-exp* (first d) (second d)))
@@ -110,16 +108,14 @@
 
 (define (set-formula! letter index exp*)
   (define new (formula exp* (get-dependents letter index)))
-  (set! *formulas (list (hash-set *formulas (list letter index) new) letter index (depends-on exp*)))
+  (define ref (list letter index))
+  (set! *formulas (many (list (hash-set *formulas ref new) ref (depends-on exp*))))
   (set-content! letter index (evaluate exp* *content)))
 
-(define (propagate-change-to-formulas x)
-  (match-define (list new letter index dependents) x)
-  (define ref* (list letter index))
-  (set! *formulas (stop new))
+(define (propagate-change-to-formulas _ ref dependents)
   (for ((d (in-set dependents)))
     (match-define (list d-let d-ind) d)
-    (define new-deps (set-add (get-dependents d-let d-ind) ref*))
+    (define new-deps (set-add (get-dependents d-let d-ind) ref))
     (set! *formulas (stop (hash-set *formulas d (formula (get-exp* d-let d-ind) new-deps))))))
 
 (define-state *formulas (make-immutable-hash) propagate-change-to-formulas) ;; [HashOF Ref* Formula] 

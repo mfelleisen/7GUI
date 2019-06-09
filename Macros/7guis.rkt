@@ -3,7 +3,6 @@
 ;; TODO
 ;; -- stop should become a syn-param and use syntax-parse for set!-transformer
 ;; -- unify none and stop?
-;; -- task-7 really needs a better propagation mechanism, for structured content 
 
 (provide
 
@@ -62,9 +61,13 @@
          (define-syntax state
            (make-set!-transformer
             (lambda (stx) 
-              (syntax-case stx (stop)
+              (syntax-case stx (stop many)
                 [x (identifier? #'x) #'state-field]
                 [(set! x (stop e)) #'(begin (set! state-field e))]
+                [(set! x (many e))
+                 #'(call-with-values
+                    (λ () (apply values e))
+                    (λ (y . r) (set! state-field y) (apply f state-field r)))]
                 [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
          ...)]))
 
