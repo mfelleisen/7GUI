@@ -3,6 +3,8 @@
 ;; TODO
 ;; -- stop should become a syn-param and use syntax-parse for set!-transformer
 ;; -- unify none and stop?
+;; -- a macro to create #:change setters so that they retrieve values from fields etc.
+;; -- can this be turned into #:change-if ? 
 
 (provide
 
