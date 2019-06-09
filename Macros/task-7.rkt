@@ -125,24 +125,23 @@
 
 (define cells-canvas
   (class canvas%
-    (define (on-double-click double-click)
-      (if double-click
-          (begin (send timer stop) (popup-formula-editor *x *y) (send this on-paint))
-          (begin (send timer start DOUBLE-CLICK-INTERVAL))))
-    (define-state *possible-double-click? #f on-double-click)
+    (define *double? #f)
     (define *x 0)
-    (define-state *y 0 (λ _ (set! *possible-double-click? (not *possible-double-click?))))
+    (define-state *y 0 (λ _ (set! *double? (not *double?))))
     
     (define (timer-cb)
-      (when *possible-double-click?
-        (popup-content-editor *x *y)
+      (when *double?
+        (content-edit *x *y)
         (paint-callback this 'y))
-      (set! *possible-double-click? #f))
+      (set! *double? #f))
     (define timer (new timer% [notify-callback timer-cb]))
     
     (define/override (on-event evt)
       (when (eq? (send evt get-event-type) 'left-down)
-        (set!-values (*x *y) (values (send evt get-x) (send evt get-y)))))
+        (set!-values (*x *y) (values (send evt get-x) (send evt get-y)))
+        (if *double?
+            (send timer start DOUBLE-CLICK-INTERVAL)
+            (begin (send timer stop) (set! *double? #f) (formula-edit *x *y) (send this on-paint)))))
     
     (define (paint-callback _self _evt) (paint-grid dc *content))
     
@@ -206,7 +205,7 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents 
-(define ((popup-editor title-fmt validator setter source) x y)
+(define ((mk-edit title-fmt validator setter source) x y)
   (define letter (x->A x))
   (define index  (y->0 y))
   (when (and letter index)
@@ -222,11 +221,10 @@
                                       (setter letter index valid)
                                       (send dialog show #f))))]))))
       
-(define popup-formula-editor
-  (popup-editor "a formula for cell ~a~a" string->exp* set-formula! (compose exp*->string get-exp*)))
+(define content-edit (mk-edit "content for cell ~a~a" valid-content set-content! get-content))
 
-(define popup-content-editor
-  (popup-editor "content for cell ~a~a" valid-content set-content! get-content))
+(define formula-edit
+  (mk-edit "a formula for cell ~a~a" string->exp* set-formula! (compose exp*->string get-exp*)))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"] [width (/ WIDTH 2)][height (/ HEIGHT 3)]))
