@@ -29,18 +29,16 @@
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
 (define-syntax-rule (define-getr name (*source selector))
-  (define (name letter index)
-    (define f (hash-ref *source (list letter index) #f))
-    (and f (selector f))))
+  (define (name letter index) (selector (hash-ref *source (list letter index) #f))))
+(define ((propagate-false f) x) (and x (f x)))
 
-(define-getr get-exp* (*formulas formula-formula))
-(define-getr get-dependents (*formulas formula-dependents))
-(define-getr get-content (*content values))
+(define-getr get-exp* (*formulas (propagate-false formula-formula)))
+(define-getr get-dependents (*formulas (propagate-false formula-dependents)))
+(define-getr get-content (*content (λ (x) (or x 0))))
 
 (define (set-content! letter index vc)
-  (define ref* (list letter index))
   (define current (get-content letter index))
-  (set! *content (hash-set *content ref* vc))
+  (set! *content (hash-set *content (list letter index) vc))
   (when (and current (not (= current vc)))
     (define f (get-dependents letter index))
     (when f (propagate-to f))))
@@ -199,7 +197,7 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents 
-(define ((popup-editor title-fmt validator registration source) x y)
+(define ((popup-editor title-fmt validator setter source) x y)
   (define letter (x->A x))
   (define index  (y->0 y))
   (when (and letter index)
@@ -212,7 +210,7 @@
                                   (when (eq? (send evt get-event-type) 'text-field-enter)
                                     (define valid (validator (send self get-value)))
                                     (when valid 
-                                      (registration letter index valid)
+                                      (setter letter index valid)
                                       (send dialog show #f))))]))))
       
 (define popup-formula-editor
