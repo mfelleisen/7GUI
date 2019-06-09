@@ -125,12 +125,14 @@
 
 (define cells-canvas
   (class canvas%
-    (inherit on-paint get-dc)
-
-    (define *possible-double-click? #f)
+    (define (on-double-click double-click)
+      (if double-click
+          (begin (send timer stop) (popup-formula-editor *x *y) (send this on-paint))
+          (begin (send timer start DOUBLE-CLICK-INTERVAL))))
+    (define-state *possible-double-click? #f on-double-click)
     (define *x 0)
-    (define *y 0)
-
+    (define-state *y 0 (λ _ (set! *possible-double-click? (not *possible-double-click?))))
+    
     (define (timer-cb)
       (when *possible-double-click?
         (popup-content-editor *x *y)
@@ -140,21 +142,12 @@
     
     (define/override (on-event evt)
       (when (eq? (send evt get-event-type) 'left-down)
-        (set! *x (send evt get-x))
-        (set! *y (send evt get-y))
-        (cond
-          [(not *possible-double-click?)
-           (set! *possible-double-click? #t)
-           (send timer start DOUBLE-CLICK-INTERVAL)]
-          [else
-           (send timer stop)
-           (set! *possible-double-click? #f)
-           (popup-formula-editor *x *y)
-           (paint-callback this 'y)])))
+        (set!-values (*x *y) (values (send evt get-x) (send evt get-y)))))
     
-    (define (paint-callback _self _evt) (paint-grid (get-dc) *content))
+    (define (paint-callback _self _evt) (paint-grid dc *content))
     
-    (super-new [paint-callback paint-callback])))
+    (super-new [paint-callback paint-callback])
+    (define dc (send this get-dc))))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; grid layout 
