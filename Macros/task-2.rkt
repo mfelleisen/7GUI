@@ -14,14 +14,13 @@
 (define-state *C 0  (propagate-to *F (λ (c) (+ (* c 9/5) 32)) F-field))
 (define-state *F 32 (propagate-to *C (λ (f) (* (- f 32) 5/9)) C-field))
 
-(define-syntax-rule (from field)
-  (λ (old)
-    (define field:num (string->number (send field get-value)))
-    (send field set-field-background (make-object color% "white"))
-    (or field:num (begin (send field set-field-background (make-object color% "red")) none))))
+(define flow
+  (with field:num #:post string->number
+        (send self set-field-background (make-object color% "white"))
+        (or field:num (begin (send self set-field-background (make-object color% "red")) none))))
 
 (define temp-field% (class text-field% (super-new [min-width 200])))
     
 (gui "Temperature Converter" 
-     ((#:id F-field temp-field% #:change *F (from F-field) [init-value "32"][label "fahrenheit:"])
-      (#:id C-field temp-field% #:change *C (from C-field) [init-value "0"][label "celsius:"])))
+     ((#:id F-field temp-field% #:change *F flow [init-value "32"][label "fahrenheit:"])
+      (#:id C-field temp-field% #:change *C flow [init-value "0"][label "celsius:"])))

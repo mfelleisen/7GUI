@@ -22,26 +22,26 @@
 (define (enable-book . _)
   (send book enable #f)
   (when (and *start:date (date<=? (today) *start:date)
-             (or (and (string=? ONE *kind-flight))
+             (or (and (string=? ONE *kind))
                  (and *return:date (date<=? *start:date *return:date))))
     (send book enable #t)))
 
-(define-state *kind-flight ONE (λ (kf) (send return-date enable (string=? RETURN kf)) (enable-book)))
+(define-state *kind ONE (λ (kf) (send return-date enable (string=? RETURN kf)) (enable-book)))
 (define-state *start:date  (to-date DATE0) enable-book)
 (define-state *return:date (to-date DATE0) enable-book)
 
 (define date-field% (class text-field% (init e) (super-new [label ""][init-value DATE0][enabled e])))
 
-(define-syntax-rule (check-date field)
-  (λ (old)
-    (define date (to-date (send field get-value)))
-    (cond
-      [date (send field set-field-background WHITE) date]
-      [else (send field set-field-background RED)   (send book enable #f) none])))
+(define check-date
+  (with date #:post to-date 
+        (cond
+          [date (send self set-field-background WHITE) date]
+          [else (send self set-field-background RED)   (send book enable #f) none])))
 
-(gui "Flight Booker"
-     (#:id kind choice% #:change *kind-flight (λ _ (list-ref CHOICES (send kind get-selection)))
-      [label ""][choices CHOICES])
-     (#:id start-date  date-field% #:change *start:date (check-date start-date) (e #t))
-     (#:id return-date date-field% #:change *return:date (check-date return-date) (e #f))
+(define set-kind (with x #:post (curry list-ref CHOICES) #:method get-selection x))
+
+(gui "Flight Booker" 
+     (choice% #:change *kind set-kind [label ""][choices CHOICES])
+     (date-field% #:change *start:date check-date (e #t))
+     (#:id return-date date-field% #:change *return:date check-date (e #f))
      (#:id book button% [label "Book"][enabled #f][callback (λ _ (displayln "confirmed"))]))

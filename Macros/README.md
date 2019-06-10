@@ -9,6 +9,15 @@
 - state variables: `define-state`
   -  how a change to the variable propagates to the rest of the model and the view
 
+*TODO*
+
+- task05 could benefit from macro-expansion inside of `gui` and `define-gui`
+
+```
+(define-syntax-rule (but% f lbl) (button% #:change *data (f lbl) [label (format "~a" 'lbl)]))
+(but% just Create) (but% (mk-changer Update)) (but% (mk-changer Delete))  
+```
+
 
 [task-6](task-6.rkt) illustrates how a single program can use the gui layout macros in
 several places and how state variables show up both in the model and the

@@ -23,14 +23,10 @@
 
 {define-state *elapsed 0 elapsed-cb}    ;; INTERVAL/1000 ms accumulated elapsed time
 [define-state *duration 0 duration-cb]  ;; INTERVAL/1000 ms set duration interval 
-
-(define-syntax-rule (from field)
-  (λ (old)
-    (define new-duration (send field get-value))
-    (if (= new-duration *duration) none [begin (send timer stop) new-duration])))
+(define set-duration (with nu (if (= nu *duration) none [begin (send timer stop) nu])))
 
 (gui "Timer"
      (#:id elapsed gauge% [label "elapsed"][enabled #f][range 100])
      (#:id text text-field% [init-value "0"][label ""])
-     (#:id s slider% #:change *duration (from s) [label "duration"][min-value 0][max-value 100])
-     (button% #:change *elapsed (λ _ (send timer stop) (begin0 0 (duration-cb))) [label "reset"]))
+     (#:id s slider% #:change *duration set-duration [label "duration"][min-value 0][max-value 100])
+     (button% #:change *elapsed (with _ (send timer stop) (begin0 0 (duration-cb))) [label "reset"]))

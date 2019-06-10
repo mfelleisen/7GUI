@@ -16,9 +16,9 @@
 (define-state *prefix "" data->selected!)
 (define-state *selected *data (λ (s) (send lbox set s))) ;; selected = (filter select data)
 
-(define (Create-cb *data) (append *data (list (get-name))))
-(define (Update-cb i) (if i (operate-on i (curry cons (get-name))) none))
-(define (Delete-cb i) (if i (operate-on i values) none))
+(define (Create *data) (append *data (list (get-name))))
+(define (Update i) (if i (operate-on i (curry cons (get-name))) none))
+(define (Delete i) (if i (operate-on i values) none))
 
 #; {N [[Listof X] -> [Listof X]] -> [Listof X]}
 ;; traverse list to the i-th position of selected in data, then apply operator to rest (efficiency)
@@ -35,21 +35,19 @@
 (define (get-name) (string-append (send surname get-value) ", " (send name get-value)))
 
 ;; ---------------------------------------------------------------------------------------------------
-(define-syntax-rule (from field get-value f) (λ (_) (f (send field get-value))))
+(define (mk-changer p) (with i #:post p #:field lbox #:method get-selection i))
+(define (name-field% n) (class text-field% (super-new (label n) (init-value "") (min-width 200))))
 
 (define-gui frame "CRUD"
   (#:horizontal
    (#:vertical
-    (#:id prefix text-field% #:change *prefix (from prefix get-value values)
-     [label "Filter prefix: "][init-value ""])
+    (text-field% #:change *prefix (with p p) [label "Filter prefix: "][init-value ""])
     (#:id lbox list-box% [label #f][choices '()][min-width 100][min-height 100]))
-   (#:vertical
-    (#:id name    text-field% [label "Name:      "][init-value ""][min-width 200])
-    (#:id surname text-field% [label "Surname: "][init-value ""][min-width 200])))
+   (#:vertical (#:id name (name-field% "Name:      ")) (#:id surname (name-field% "Surname: "))))
   (#:horizontal 
-   (button% #:change *data Create-cb [label "Create"])
-   (button% #:change *data (from lbox get-selection Update-cb) [label "Update"])
-   (button% #:change *data (from lbox get-selection Delete-cb) [label "Delete"])))
+   (button% #:change *data (just Create) [label "Create"])
+   (button% #:change *data (mk-changer Update) [label "Update"])
+   (button% #:change *data (mk-changer Delete) [label "Delete"])))
 
 (selector! "")
 (send frame show #t)

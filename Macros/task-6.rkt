@@ -67,8 +67,8 @@
 (define circle-canvas%
   (class canvas%
     (define *in-adjuster #f) ;; we can get a quasi-modal dialog this way 
-    (define/public (unlock) (set! *in-adjuster #f) (displayln 'unlocked))
-    (define/private (lock) (set! *in-adjuster #t) (displayln 'locked))
+    (define/public (unlock) (set! *in-adjuster #f))
+    (define/private (lock) (set! *in-adjuster #t))
 
     (define-state *x 0 (λ (x) (send this on-paint)))
     (define-state *y 0 values)
@@ -116,9 +116,8 @@
       (super-new)))
 
   (define a-slider% (class slider% (super-new [label ""] [min-value 10] [max-value 100])))
-  
-  (gui #:frame adjuster-dialog% (format "Adjust radius of circle at (~a,~a)" x0 y0)
-       (#:id s a-slider% #:change *d (λ (_) (send s get-value)) [init-value d0])))
+  (define title (format "Adjust radius of circle at (~a,~a)" x0 y0))
+  (gui #:frame adjuster-dialog% title (a-slider% #:change *d (with id id) [init-value d0])))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-gui frame "Circle Drawer"

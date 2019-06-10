@@ -1,8 +1,6 @@
 #lang racket/gui
 
 ;; TODO
-;; -- stop should become a syn-param and use syntax-parse for set!-transformer
-;; -- unify none and stop?
 ;; -- a macro to create #:change setters so that they retrieve values from fields etc.
 ;; -- can this be turned into #:change-if ? 
 
@@ -34,6 +32,9 @@
  ;; like define-gui, but immediately shows the constructed frame 
  gui
 
+ stop
+ many
+ 
  none)
 
 ;; ---------------------------------------------------------------------------------------------------
@@ -56,6 +57,14 @@
          (define state-field state0)
          (define-getter/setter (state state-field g)))]))
 
+(define-syntax (many stx)
+  (raise-syntax-error #f "used out of context"))
+
+(define-syntax (stop stx)
+  (raise-syntax-error #f "used out of context"))
+
+(require (for-template syntax/parse))
+
 (define-syntax (define-getter/setter stx)
   (syntax-parse stx 
     [(_ (state state-field f) ...)
@@ -63,9 +72,10 @@
          (define-syntax state
            (make-set!-transformer
             (lambda (stx) 
-              (syntax-case stx (stop many)
-                [x (identifier? #'x) #'state-field]
-                [(set! x (stop e)) #'(begin (set! state-field e))]
+              (syntax-parse stx
+                #:literals (stop many)
+                [x:id #'state-field]
+                [(set! x (stop e)) #'(set! state-field e)]
                 [(set! x (many e))
                  #'(call-with-values
                     (λ () (apply values e))
@@ -75,14 +85,14 @@
 
 (begin-for-syntax
   
-  (define-syntax-class field+value-expr
+  (define-syntax-class option
     #:description "name and value binding"
     (pattern (x:id e:expr)))
 
   (define-syntax-class gui-element
     #:description "gui element specification"
     (pattern ((~optional (~seq #:id x:id))
-              widget:expr (~optional (~seq #:change s:id f:expr)) fv:field+value-expr ...))
+              widget:expr (~optional (~seq #:change s:id f:expr)) fv:option ...))
     (pattern (#:horizontal ge:gui-element ...))
     (pattern (#:vertical ge:gui-element ...)))
 
@@ -118,17 +128,31 @@
      #'(begin (define horizontal (make-horizontal p)) (gui-element horizontal b) ...)]
     [(_ p (#:vertical b ...))
      #'(begin (define vertical (make-vertical p)) (gui-element vertical b) ...)]
-    [(_ p [(~optional (~seq #:id x:id))
-           gui-element:id (~optional (~seq #:change s:id f:expr)) option:field+value-expr ...])
+    [(_ p [(~optional (~seq #:id x:id)) w%:expr (~optional (~seq #:change s:id f:expr)) o:option ...])
      #`(begin
          (~? (~@ (define g f)) (~@))
-         [define (~? x y) (new gui-element [parent p]
+         [define (~? x y) (new w% [parent p]
                                (~? (~@ [callback
-                                        (λ _
-                                          (define new (g s))
+                                        (λ (self evt)
+                                          (define new (g s self))
                                           (unless (*none? new) (set! s new)))])
                                    (~@))
-                               option ...)])]))
+                               o ...)])]))
+
+(provide with just)
+(define ((just f) old _self) (f old))
+(define-syntax (with stx)
+  (syntax-parse stx
+    [(_ x:id
+        (~optional (~seq #:post f:expr))
+        (~optional (~seq #:field ff:id))
+        (~optional (~seq #:method m:id))
+        e ...)
+     #:with self (datum->syntax stx 'self)
+     #`(let ([g (~? f values)])
+         (λ (_old self)
+           (define x (g (send (~? ff self) (~? m get-value))))
+           e ...))]))
 
 (struct *none ())
 (define none (*none))
