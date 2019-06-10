@@ -12,6 +12,7 @@ was doing. (To my surprise, I never had to resort to unit testing.)
 - task 5: a CRUD MVC 
 - task 6: a circle drawer, with undo/redo facility (under-specified)
 - task 7: a simple spreadsheet
+  - task 7-exp: implement the simplistic Expression language for spreadsheets
 
 To install, 
 ```
@@ -28,6 +29,18 @@ To run,
 gracket task-N.rkt
 ```
 for any N. 
+
+### [Macros](Macros/)
+
+The Macros directory shows how to develop macros that help clarify what's
+happening in the primitive implementations. using macros also reduces the
+length of the implementation, though by a constant amount. For the small
+problems, this reduction looks like a lot; for the larger one it is not
+worth mentioning. 
+
+Still, reformulating the implementations with better "notation" uncovered a
+couple of small bugs. See [README](Macros/README.md).
+
 
 ### TO DO 
 
