@@ -9,19 +9,9 @@
 - state variables: `define-state`
   -  how a change to the variable propagates to the rest of the model and the view
 
-*TODO*
-
-- task05 could benefit from macro-expansion inside of `gui` and `define-gui`
-
-```
-(define-syntax-rule (but% f lbl) (button% #:change *data (f lbl) [label (format "~a" 'lbl)]))
-(but% just Create) (but% (mk-changer Update)) (but% (mk-changer Delete))  
-```
-
-
 [task-6](task-6.rkt) illustrates how a single program can use the gui layout macros in
 several places and how state variables show up both in the model and the
-view, which of course just means that "model" comes in several layer. 
+view, which of course just means that "model" comes in several layers. 
 
 [task-7](task-7.rkt) is an example of a state variable with complex content
 (a hash table) and a complex update behavior. A change propagates several
@@ -39,3 +29,19 @@ replied with the pithy slogan that
 	  a recursive-descent parser in a parsing framework than Typed Racket."
 
 All I can say to this is "take that, Typists!". 
+
+
+
+#### To Do
+
+- task-5 might benefit from macro-expansion inside of `gui` and
+  `define-gui`, specifically the `option` class
+
+```
+(define-syntax-rule (but% f lbl) (button% #:change *data (f lbl) [label (format "~a" 'lbl)]))
+````
+and then we get the 3 horizontal buttons like this:
+```
+(but% just Create) (but% mk-changer Update) (but% mk-changer Delete)  
+```
+But this could also be overkill. 
