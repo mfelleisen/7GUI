@@ -28,5 +28,5 @@
 (gui "Timer"
      (#:id elapsed gauge% [label "elapsed"][enabled #f][range 100])
      (#:id text text-field% [init-value "0"][label ""])
-     (#:id s slider% #:change *duration set-duration [label "duration"][min-value 0][max-value 100])
-     (button% #:change *elapsed (with _ (send timer stop) (begin0 0 (duration-cb))) [label "reset"]))
+     (slider% #:change *duration set-duration [label "duration"][min-value 0][max-value 100])
+     (button% #:change *elapsed (just (λ _ (send timer stop) (begin0 0 (duration-cb)))) [label "reset"]))

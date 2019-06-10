@@ -5,8 +5,8 @@
 ;; and, depending on the choice, a start date or a start date and an end date. 
 
 ;; ---------------------------------------------------------------------------------------------------
-(require gregor)
 (require 7GUI/Macros/7guis)
+(require gregor)
 
 ;; gregor should not raise an exception when parsing fails, but return #f
 (define (to-date d) (with-handlers ([exn? (λ (_) #f)]) (parse-date d "d.M.y")))
