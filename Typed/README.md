@@ -39,3 +39,14 @@ used a `cast`:
 (and r (if (real? r) (cast r Exact-Rational) #f)
 ```
 I'll have to dig into this. 
+
+
+### Insight 
+
+It is pretty cool how macros inside of a to-be-converted module can
+manipulate types: 
+
+```
+(define-syntax-rule (def-cb (name {x : T}) exp ...)
+  (define (name {x : (U String T)} {_y : Any}) : Void exp ... (send lbox set *selected)))
+```
