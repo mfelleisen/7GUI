@@ -1,15 +1,13 @@
 #! /usr/bin/env gracket
 #lang typed/racket/gui
 
-;; We need something like this in Typed Racket. 
-(: string->er (String -> (U Exact-Rational False)))
-(define (string->er s)
-  (define r (string->number s))
-  ;; what is the predicate for Exact-Rational ???
-  (and r (if (real? r) (cast r Exact-Rational) #f)))
-
 ;; a bi-dorectional temperature converter (Fahrenheit vs Celsius]
 
+;; ---------------------------------------------------------------------------------------------------
+(require 7GUI/Typed/from-string)
+;; We need something like this in Typed Racket. 
+
+;; ---------------------------------------------------------------------------------------------------
 (define-type Temp Exact-Rational)
 (define-type CB   {(Instance Text-Field%) Any -> Void})
 
