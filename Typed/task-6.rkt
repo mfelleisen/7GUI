@@ -18,7 +18,7 @@
 (: *circles [Listof circle])
 (define *circles '())
 
-(: *circles [Listof circle])
+(: *history [Listof circle])
 (define *history '())
 
 (: add-circle! (-> Integer Integer Void))
@@ -31,7 +31,7 @@
   (match-define (circle x y d a) old-closest)
   (define resized
     (match a
-      ['added (circle x y new-d `(resized (,d)))]
+      ['added (circle x y new-d `(resized . (,d)))]
       [`(resized . ,old-sizes) (circle x y new-d `(resized ,(cons d old-sizes)))]))
   (set! *circles (cons resized (remq old-closest *circles))))
 
@@ -63,7 +63,7 @@
 (: distance (-> Integer Integer (-> circle Real)))
 (define ((distance xm ym) c)
   (match-define (circle xc yc _d _a) c)
-  (sqrt (+ (expt (- xc xm) 2) (expt (- yc ym) 2))))
+  (sqrt (+ (sqr (- xc xm)) (sqr (- yc ym)))))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define solid-gray  (new brush% [color "gray"]))
@@ -71,7 +71,7 @@
 
 (define circle-canvas%
   (class canvas%
-    (define *in-adjuster #f) ;; we can get a quasi-modal dialog this way 
+    (define *in-adjuster : Boolean #f) ;; we can get a quasi-modal dialog this way 
     (define/public (unlock) : Void (set! *in-adjuster #f))
     (define/private (lock) : Void (set! *in-adjuster #t))
 
@@ -121,7 +121,7 @@
 
 (define adjuster-dialog%
   (class frame% (init-field {closest-circle : circle})
-    (match-define (circle x* y* *d _a) closest-circle)
+    (match-define (circle #{x* : Integer} #{y* : Integer} #{*d : Natural} _a) closest-circle)
     (define others (remq closest-circle *circles))
     
     (define/public (continuous {new-d : Natural}) : Void ;; resize locally while adjusting 
@@ -145,6 +145,6 @@
 (new button% [label "Undo"][parent hpane1][callback (λ _ (undo) (send canvas on-paint))])
 (new button% [label "Redo"][parent hpane1][callback (λ _ (redo) (send canvas on-paint))])
 (define hpane2 (new horizontal-panel% [parent frame][min-height 400][alignment '(center center)]))
-(define canvas (new circle-canvas% [parent hpane2][style '(border)]))
+(define canvas : (Instance Canvas<%>) (new circle-canvas% [parent hpane2][style '(border)]))
 
 (send frame show #t)

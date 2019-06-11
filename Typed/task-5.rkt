@@ -26,7 +26,7 @@
 ;; ASSUME selected = (filter selector data)
 ;; ASSUME i <= (length selected)
 (define (operate-on i operator (data *data) (select select) (selected *selected))
-  (let sync : Data ((i : Natural i) (data : Data data) (selected : Data selected))
+  (let sync ((i i) (data data) (selected selected))
     (if (select (first data))
         (if (zero? i)
             (operator (rest data))
