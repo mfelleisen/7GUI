@@ -8,13 +8,13 @@
 (require 7GUI/Typed/gregor)
 
 ;; gregor should not raise an exception when parsing fails, but return #f
-(define (to-date {d : String}) (with-handlers ([exn? (λ (_) #f)]) (parse-date d "d.M.y")))
+(define (to-date {d : String}) (with-handlers ([exn:fail? (λ (_) #f)]) (parse-date d "d.M.y")))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define DATE0   "27.03.2014")
 (define ONE     "one-way flight")
 (define RETURN  "return flight")
-(define CHOICES : [Listof String]`(,ONE ,RETURN))
+(define CHOICES `(,ONE ,RETURN))
 (define RED     (make-object color% "red"))
 (define WHITE   (make-object color% "white"))
 
@@ -32,7 +32,7 @@
 
 (: enable-return-book (->* [] [(Instance Choice%) Any] Void))
 (define (enable-return-book (self #f) (_evt #f))
-  (set! *kind ((inst list-ref String) CHOICES (if self (or (send self get-selection) 0) 0)))
+  (set! *kind (list-ref CHOICES (or (and self (send self get-selection)) 0)))
   (send return-d enable (string=? RETURN *kind))
   (enable-book))
 
