@@ -6,7 +6,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define Default-Diameter 20)
 
-(define-type Action (U Symbol [cons Symbol [Listof Natural]]))
+(define-type Action (U Symbol [List Symbol [Listof Natural]]))
 (struct circle ({x : Integer} {y : Integer} {d : Natural} {action : Action}) #:transparent)
 
 (: draw-1-circle (-> (Instance DC<%>) (Instance Brush%) circle Void))
@@ -31,8 +31,8 @@
   (match-define (circle x y d a) old-closest)
   (define resized
     (match a
-      ['added (circle x y new-d `(resized . (,d)))]
-      [`(resized . ,old-sizes) (circle x y new-d `(resized . ,(cons d old-sizes)))]))
+      ['added (circle x y new-d `(resized (,d)))]
+      [`(resized ,old-sizes) (circle x y new-d `(resized ,(cons d old-sizes)))]))
   (set! *circles (cons resized (remq old-closest *circles))))
 
 (define (undo) : Void 
@@ -231,6 +231,7 @@
     
     (super-new [paint-callback paint-callback])))
 
+
 (: popup-adjuster (-> circle Void))
 (define (popup-adjuster closest-circle)
   (define (cb {_ : Any} {evt : (Instance Control-Event%)}) : Void 
@@ -242,19 +243,170 @@
 (: adjuster! (-> circle (->* () () #:rest Any Void)))
 (define ((adjuster! closest-circle) . x)
   (define d0 (circle-d closest-circle))
-  (define frame (new adjuster-dialog% [closest closest-circle]))
+  (define frame (new adjuster-dialog% [label "to make type checker happy"][closest-circle closest-circle]))
   (new adjuster-slider% [parent frame][init-value d0][update (λ ({x : Natural}) (send frame continuous x))])
   (send frame show #t))
 
+(define-type Adjuster-Dialog%
+  (Class
+   (continuous (-> Natural Void))
+   (init-field {closest-circle circle})
+   (init 
+         (label String)
+         (parent (U (Instance Frame%) False) #:optional)
+         (width (U False Integer) #:optional)
+         (height (U False Integer) #:optional)
+         (x (U False Integer) #:optional)
+         (y (U False Integer) #:optional)
+         (style
+          (Listof
+           (U 'float
+              'fullscreen-aux
+              'fullscreen-button
+              'hide-menu-bar
+              'metal
+              'no-caption
+              'no-resize-border
+              'no-system-menu
+              'toolbar-button))
+          #:optional)
+         (enabled Any #:optional)
+         (border Nonnegative-Integer #:optional)
+         (spacing Nonnegative-Integer #:optional)
+         (alignment
+          (List (U 'center 'left 'right) (U 'bottom 'center 'top))
+          #:optional)
+         (min-width (U Exact-Nonnegative-Integer False) #:optional)
+         (min-height (U Exact-Nonnegative-Integer False) #:optional)
+         (stretchable-width Any #:optional)
+         (stretchable-height Any #:optional))
+   (accept-drop-files (case-> (-> Boolean) (-> Any Void)))
+   (add-child (-> (Instance Subwindow<%>) Void))
+   (after-new-child (-> (Instance Subarea<%>) Void))
+   (begin-container-sequence (-> Void))
+   (border (case-> (-> Nonnegative-Integer) (-> Nonnegative-Integer Void)))
+   (can-close? (-> Boolean))
+   (can-exit? (-> Boolean))
+   (center (-> (U 'both 'horizontal 'vertical) Void))
+   (change-children
+    (-> (-> (Listof (Instance Subarea<%>)) (Listof (Instance Subarea<%>))) Void))
+   (client->screen (-> Integer Integer (values Integer Integer)))
+   (container-flow-modified (-> Void))
+   (container-size
+    (-> (Listof (List Nonnegative-Integer Nonnegative-Integer Any Any))
+        (values Nonnegative-Integer Nonnegative-Integer)))
+   (create-status-line (-> Void))
+   (delete-child (-> (Instance Subwindow<%>) Void))
+   (display-changed (-> Any))
+   (enable (-> Any Void))
+   (end-container-sequence (-> Void))
+   (focus (-> Void))
+   (fullscreen (-> Any Void))
+   (get-alignment
+    (-> (values (U 'center 'left 'right) (U 'bottom 'center 'top))))
+   (get-children (-> (Listof (Instance Subarea<%>))))
+   (get-client-handle (-> Any))
+   (get-client-size (-> (values Nonnegative-Integer Nonnegative-Integer)))
+   (get-cursor (-> (U (Instance Cursor%) False)))
+   (get-edit-target-object
+    (-> (U (Instance Editor<%>) (Instance Window<%>) False)))
+   (get-edit-target-window (-> (U (Instance Window<%>) False)))
+   (get-eventspace (-> Any))
+   (get-focus-object (-> (U (Instance Editor<%>) (Instance Window<%>) False)))
+   (get-focus-window (-> (U (Instance Window<%>) False)))
+   (get-graphical-min-size (-> (values Nonnegative-Integer Nonnegative-Integer)))
+   (get-handle (-> Any))
+   (get-height (-> Nonnegative-Integer))
+   (get-label
+    (-> (U 'app
+           'caution
+           'stop
+           (Instance Bitmap%)
+           (List (Instance Bitmap%) String (U 'bottom 'left 'right 'top))
+           False
+           String)))
+   (get-menu-bar (-> (U (Instance Menu-Bar%) False)))
+   (get-parent (-> (U (Instance Area-Container<%>) False)))
+   (get-plain-label (-> (U False String)))
+   (get-size (-> (values Nonnegative-Integer Nonnegative-Integer)))
+   (get-top-level-window (-> (Instance Top-Level-Window<%>)))
+   (get-width (-> Nonnegative-Integer))
+   (get-x (-> Integer))
+   (get-y (-> Integer))
+   (has-focus? (-> Boolean))
+   (has-status-line? (-> Boolean))
+   (iconize (-> Any Void))
+   (is-enabled? (-> Boolean))
+   (is-fullscreened? (-> Boolean))
+   (is-iconized? (-> Boolean))
+   (is-maximized? (-> Boolean))
+   (is-shown? (-> Boolean))
+   (maximize (-> Any Void))
+   (min-height (case-> (-> Integer) (-> Integer Void)))
+   (min-width (case-> (-> Integer) (-> Integer Void)))
+   (modified (case-> (-> Boolean) (-> Any Void)))
+   (move (-> Integer Integer Void))
+   (on-activate (-> Any Void))
+   (on-close (-> Void))
+   (on-drop-file (-> Path Void))
+   (on-exit (-> Void))
+   (on-focus (-> Any Void))
+   (on-menu-char (-> (Instance Key-Event%) Boolean))
+   (on-message (-> Any Void))
+   (on-move (-> Integer Integer Void))
+   (on-size (-> Nonnegative-Integer Nonnegative-Integer Void))
+   (on-subwindow-char (-> (Instance Window<%>) (Instance Key-Event%) Boolean))
+   (on-subwindow-event (-> (Instance Window<%>) (Instance Mouse-Event%) Boolean))
+   (on-subwindow-focus (-> (Instance Window<%>) Any Void))
+   (on-superwindow-enable (-> Any Void))
+   (on-superwindow-show (-> Any Void))
+   (on-system-menu-char (-> (Instance Key-Event%) Boolean))
+   (on-toolbar-button-click (-> Void))
+   (on-traverse-char (-> (Instance Key-Event%) Boolean))
+   (place-children
+    (-> (Listof (List Nonnegative-Integer Nonnegative-Integer Any Any))
+        Nonnegative-Integer
+        Nonnegative-Integer
+        (Listof
+         (List
+          Nonnegative-Integer
+          Nonnegative-Integer
+          Nonnegative-Integer
+          Nonnegative-Integer))))
+   (popup-menu
+    (-> (Instance Popup-Menu%) Nonnegative-Integer Nonnegative-Integer Void))
+   (reflow-container (-> Void))
+   (refresh (-> Void))
+   (resize (-> Integer Integer Void))
+   (screen->client (-> Integer Integer (values Integer Integer)))
+   (set-alignment (-> (U 'center 'left 'right) (U 'bottom 'center 'top) Void))
+   (set-cursor (-> (U (Instance Cursor%) False) Void))
+   (set-icon
+    (->* ((Instance Bitmap%)) ((Instance Bitmap%) (U 'both 'large 'small)) Void))
+   (set-label (-> String Void))
+   (set-status-text (-> String Void))
+   (show (-> Any Void))
+   (spacing (case-> (-> Nonnegative-Integer) (-> Nonnegative-Integer Void)))
+   (stretchable-height (case-> (-> Boolean) (-> Any Void)))
+   (stretchable-width (case-> (-> Boolean) (-> Any Void)))
+   (warp-pointer (-> Integer Integer Void))
+   (augment
+    (can-close? (-> Boolean))
+    (display-changed (-> Any))
+    (on-close (-> Void)))))
+
 
 ;; TO BE TYPED, work around bugs in Typed Racket 
-(define adjuster-dialog%
-  (class frame% (init-field {closest : circle})
-    (define closest-circle : circle closest)
-    (define x* (circle-x closest-circle))
-    (define y* (circle-y closest-circle))
-    (define *d (circle-d closest-circle))
-    
+(define adjuster-dialog% : Adjuster-Dialog% 
+  (class frame% (init-field closest-circle)
+    ;; to make type checker happy
+    (init label)
+    ;; the next 3 are needed to get rid of error that says missing type for closest-circle
+    (: x* Integer)
+    (: y* Integer)
+    (: *d Natural)
+    (match-define (circle x* y* *d _) closest-circle)
+ 
     (: others (Listof circle))
     (define others (remq closest-circle *circles))
     
