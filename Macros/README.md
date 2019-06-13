@@ -1,5 +1,4 @@
-
-### Using Macros to Simplify the Specification of Views and Models 
+## Using Macros to Simplify the Specification of Views and Models 
 
 7guis` provides macros for specifying
 
@@ -32,7 +31,7 @@ All I can say to this is "take that, Typists!".
 
 
 
-#### To Do
+### To Do
 
 - task-5 might benefit from macro-expansion inside of `gui` and
   `define-gui`, specifically the `option` class

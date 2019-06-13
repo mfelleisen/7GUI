@@ -1,29 +1,122 @@
+## Adding Types to the Primitive GUI Solution 
 
-### Adding Types to the Primitive GUI Solution 
+The files in this directory are typed versions of the task files from the
+parent directory. I did not convert `task-7-exp.rkt`, because it doesn't
+belong to the proper GUI tasks. 
 
-These files add types to the primitive solutions in the home directory. 
+From the design perspective, adding types was less useful than exploiting
+more of Racket's macro power. See [Macros/README](../Macros/README.md). But
+it wasn't useless. 
 
-The addition of types typically requires 
+From the "gradual typing" perspective, the experience started at amazing
+high points but eventually deteriorated into one of pure pain for a number
+of reasons. 
+
+### Easy Type Injections 
+
+Injection types into tasks 1 through 5 is easy. 
+
+The addition of types typically requires
 
 - a change to the language line of the module 
 - a small number of type annotations
 
-Surprisingly the type checker is of little help with the conversion.  When
+Even though, the type checker is of little help with the conversion.  When
 the #lang line is changed to typed/racket/gui, the type checker tends to
-request type information about one of the gui elements (at the bottom of
-the program). As the converted programs `task-1` thru `task-5` show,
-however, adding types to the callback functions suffices to make the type
-checker happy ... and this doesn't seem to take more effort than a handful
-of lines (so far).
+request type information about the gui elements, defined at the bottom of
+the program. As the converted programs show, however, adding types to the
+callback functions suffices to make the type checker happy ... and this
+doesn't seem to take more effort than a handful of lines.
 
-The exceptions are the need for (1) a typed adapter module for `gregor` and
-(2) another one for converting strings to "rational" numbers (`from-string`).
+I encountered two exceptions to this rule: 
+
+1. I introduced a typed adapter module for `gregor`, which is not
+surprising for a library. 
+
+2. I added another adapter module, `from-string`, for converting strings to
+"rational" numbers. We should probably have more of those for Typed Racket. 
 
 ### Non-trivial Type Injection 
 
-Converting `task-6` demonstrated in many ways that type injection is
-**hard**. I needed to add two relatively large type definitions for derived
-classes: 
+Converting `task-6` and `task-7` demonstrate in many ways that type
+injection is **really truly hard**. The Typed Racket documentation is much
+less helpful than the Racket one: 
+
+- it lacks the definitions of types 
+- it lacks signature definitions for functions 
+
+Use `(:type f)` instead to figure out the type of `f` and work with
+this. It isn't a perfect replacement for documented type signatures.
+
+- It lacks explanations of unusual ideas about types (say, that a Class
+  type is really a sub-classing specification). 
+
+  *Note* A Class type is a specification for sub-classing. So when a Class
+   type includes an `init` specification for, say, `label` it cannot be used
+   with `super-new` --- because that makes it unavailable to its sub-class. 
+
+### Two Important Ideas That Help With Adding Types 
+
+When it came to porting `task-6` and `task-7`, I wasn't particularly clever
+about my work. The ease of porting `task-1` to `task-5` had lulled me into
+thinking that it was going to be a breeze. 
+
+So, the very moment when you change `typed/racket/gui' and `drracket` says
+"you have 35 type errors", switch to "clever working mode", and here are
+two important hints for this. 
+
+#### Move Self-Contained Pieces of Code to a Separate Buffer 
+
+Moving from Racket to Typed Racket demands the conversion of entire
+modules. But, due to various factors, expansion plus type checking is
+relatively slow. At the same time, it may take many rounds of
+experimentation to get the types right for some expression. 
+
+[[ In the research world, I'd say Typed Racket's "macro" gradual typing
+becomes inconvenient for certain tasks. "Micro" gradual typing is clearly
+superior for the conversion task, except that it is easy to end up with
+types that express much less than the programmer has in mind. ]]
+
+Break out self-contained pieces of code and deal with them in a separate,
+temporary file. 
+
+Here is an example from `task-7` that took me forever to get right: 
+
+```
+(define-syntax-rule (define-getr name : ResultType HashType (*source selector default))
+  (begin
+    (: name (-> Letter Index ResultType))
+    (define (name letter index) ; (source *source) (result->type selector))
+      (define f ((inst hash-ref Ref HashType) *source (list letter index) #f))
+      (if f (selector f) default))))
+```
+
+This macro comes with several uses at distinct types, and getting
+`hash-ref` to work properly here took quite some work.  For example, you
+might think that `#f` could be replaced with a proper value of type
+`HashType` so that the last line could be replaced with
+
+``` 
+     (selector f)
+```
+
+but I did not get this to work (in Typed-land. See Macro-land for how to do
+this properly.) 
+
+So to get this to work, I copied the macro, its uses, its free variables,
+the `#lang` line and all the `require` lines into a separate window. This
+sped up the fixing project tremendously. 
+
+#### How to Develop a Class Type for Classes Derived from Racket GUI Classes
+
+When you derive a class from one of Racket's built-in classes and you need
+a type for this derived class, things get complicated. They get especially
+complicated for GUI widget classes, because they come with dozens of
+`init' parameters, fields, and methods. 
+
+For adding types to `task-6`, I discovered the need for `Class` types for
+`circle-canvas%` and `adjuster-dialog%`, the classes derived from `canvas%`
+and `frame%`, respectively. Take a look at the result: 
 
 - [sub-frame](sub-frame.rkt), which exports a macro for a defining a Class
   type for sub-classes of `frame%`
@@ -31,26 +124,38 @@ classes:
 - [sub-canvas](sub-canvas.rkt), which exports a macro for a defining a Class
   type for sub-classes of `canvas%`
 
-Both conversions were hard. A Class type specifies the interface for
+Here is what you need to know. A Class type specifies the interface for
 sub-classing. While the `#:implements` clause takes care of inherited
-methods, initial parameters and initial fields need to be specified
-again. The best way to get there is to use `:type` to retrieve the
-specifications of the super-class: 
+methods (and fields), initial parameters and initial fields need to be
+specified again.  See Asumu's comment in [sub-canvas](sub-canvas.rkt) for
+an explanation. 
+
+Eventually I figured out a good way to produce this `Class` type. 
+
+- first, use `:type` to retrieve the specifications of the super-class:
 
 ```
 > (:type frame%) 
 (Class ...)
 ```
 
-and to copy-and-paste the init parts of the type into the definitions
-area. The above-mentioned files define macros to splice in the additions of
-the derived class. 
+- second, copy and paste the init parts of the type into `drracket`
 
-*Note* A Class type is a specification for sub-classing. So when a Class
- type includes an `init` specification for, say, `label` it cannot be used
- with `super-new` --- because that makes it unavailable to its sub-class. 
+- third, subtract the init parameters and init fields that your derived
+  class supplies via `super-new` because they are no longer available for
+  configuration from outside the class (well, ...) 
 
-### Issues 
+- fourth, add type specifications for the newly introduced public methods
+  (and fields). 
+
+If you anticipate to re-use this type again, abstract over it with a
+macro. See [sub-canvas](sub-canvas.rkt) for an example. The sample macro
+simply adds type specification clauses to the `Class` type and gives a name
+to the resulting type. For other uses, I might make the macro subtract
+class init parameters and fields, but I haven't had a need for this
+functionality yet. 
+
+### Issues With My Original Code 
 
 Two small issues showed up during the conversion so far: 
 
@@ -88,16 +193,18 @@ degrees. And they seem to come out as `Complex` Fahrenheit degrees. Now I
 don't know about you, but I have no problems with `Complex` Celsius. But my
 types did; so I switched to `Real`. 
 
-5. Our `match-define` does not deal with type annotations on pattern
+### Issues With Typed Racket 
+
+1. Our `match-define` does not deal with type annotations on pattern
 variables. I opened an issue on this (#829). 
 
-6. Typed Racket's compose can't deal with multiple argument functions: 
+2. Typed Racket's compose can't deal with multiple argument functions: 
 
 ```
 ((inst compose Number Number Number) add1 (λ (x y) (+ x y)))
 ```
 
-7. I thoroughly miss occurrence typing for fields. It forces too many casts: 
+3. I thoroughly miss occurrence typing for private fields. It forces too many casts: 
 
 ```
 (define cells-canvas : Cells-Canvas%
@@ -117,10 +224,10 @@ variables. I opened an issue on this (#829).
 In functional Racket, this would just work. (No it doesn't work if I split
 the `when`.)
 
-### Insight 
+### An Additional Insight About Typed Racket
 
-It is pretty cool how macros inside of a to-be-converted module can
-manipulate types: 
+It is pretty cool how macros inside of a to-be-converted module can be made
+to work with types: 
 
 ```
 (define-syntax-rule (def-cb (name {x : T}) exp ...)

@@ -1,5 +1,5 @@
 
-### A Racket Implementation of [7 GUIs](https://eugenkiss.github.io/7guis/)
+## A Racket Implementation of [7 GUIs](https://eugenkiss.github.io/7guis/)
 
 The top-level of this repository implements the "7 GUIs" task with the bare
 minimum that it took me to get things running and make them reflect what I
