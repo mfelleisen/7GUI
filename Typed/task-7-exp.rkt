@@ -7,13 +7,13 @@
   (U #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M
      #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z))
 
-(define-type Exp False)
 (define-type Ref (List Letter Index))
-(define-type Content (Immutable-HashTable Ref Number))
+(define-type Exp (U Integer Ref (List Symbol Exp Exp)))
+(define-type Content (Immutable-HashTable Ref Integer))
 
 (require/typed 7GUI/task-7-exp
                [LETTERS      String]
                [string->exp* (-> String Exp)]
                [exp*->string (-> Exp String)]
-               [depends-on   (-> Exp (Listof Ref))]
+               [depends-on   (-> Exp (Setof Ref))]
                [evaluate     (-> Exp Content Integer)])

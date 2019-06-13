@@ -20,17 +20,17 @@
 (: *formulas (Immutable-HashTable Ref formula))
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
-(define-syntax-rule (define-getr name : ResultType (*source selector))
+(define-syntax-rule (define-getr name : ResultType (*source (selector Base)))
   (begin
-    (: name (-> Letter Index (U False ResultType)))
-    (define (name letter index)
+    (: name (->* (Letter Index) ([Immutable-HashTable Ref Base][-> Base ResultType]) (U False ResultType)))
+    (define (name letter index (*source *source) (selector selector))
       (: f (U ResultType False))
-      (define f (hash-ref (ann *source (Immutable-HashTable Ref ResultType)) (list letter index) #f))
+      (define f (hash-ref *source (list letter index) #f))
       (and f (selector f)))))
 
-(define-getr get-exp*       : Exp (*formulas formula-formula))
-(define-getr get-dependents : [Listof Ref] (*formulas formula-dependents))
-(define-getr get-content    : Integer (*content values))
+(define-getr get-exp*       : Exp (*formulas (formula-formula formula)))
+(define-getr get-dependents : [Setof Ref] (*formulas (formula-dependents formula)))
+(define-getr get-content    : Integer (*content (values Integer)))
 
 (: set-content! (-> Letter Index Integer Void))
 (define (set-content! letter index vc)
@@ -41,7 +41,7 @@
     (define f (get-dependents letter index))
     (when f (propagate-to f))))
 
-(: propagate-to (-> [Listof Ref] Void))
+(: propagate-to (-> [Setof Ref] Void))
 (define (propagate-to dependents)
   (for ((d : Ref dependents))
     (define exp* (get-exp* (first d) (second d)))
@@ -56,7 +56,7 @@
   (register-with-dependents (depends-on exp*) ref*)
   (set-content! letter index (evaluate exp* *content)))
 
-(: register-with-dependents (-> [Listof Ref] Ref Void))
+(: register-with-dependents (-> [Setof Ref] Ref Void))
 (define (register-with-dependents dependents ref*)
   (for ((d : Ref (in-set dependents)))
     (define current (hash-ref *formulas d #f))
@@ -137,7 +137,7 @@
 (define (0->y index)
   (+ (* (+ index 1) VSIZE) Y-OFFSET))
 
-(: finder (All (X) (-> (Sequenceof X) Natural (-> Natural X))))
+(: finder (All (X) (-> (Sequenceof X) Natural (-> Natural (U False X)))))
 (define ((finder range SIZE) x0)
   (define x (- x0 SIZE))
   (and (positive? x)
