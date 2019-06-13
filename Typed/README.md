@@ -12,7 +12,45 @@ From the "gradual typing" perspective, the experience started at amazing
 high points but eventually deteriorated into one of pure pain for a number
 of reasons. 
 
-### Easy Type Injections 
+### DESIGN Issues With My Original Code 
+
+Two small issues showed up during the conversion so far: 
+
+1. The type checker could not figure out that my flight-booker program
+(task 3) guarantees the existence of a selection in the `*kind` choice
+field. Since this isn't always the case, the probe for a selection may
+produce `#f` and the types for this method exposed the problem: 
+
+```
+((inst list-ref String) CHOICES (if self (or (send self get-selection) 0) 0)))
+```
+
+2. Using a variable to record both "the mouse is inside some area and this
+is its x coordinate" works well in Untyped code but for Types you're better
+off with splitting this into two variables. (It added a variable
+declaration and simplified a method, a lot.) 
+
+3. Adding types made me discover that the paint callback in a canvas
+receives the drawing context as the second argument, so there's no need to
+retrieve it with a `send`. The code wasn't wrong to say the second argument
+is `Any`, but figuring out what it was was a "good thing". 
+
+4. I could not figure out how to get an `Exact-Rational` from a string so I
+used a `cast`: 
+
+```
+(and r (if (real? r) (cast r Exact-Rational) #f)
+```
+I'll have to dig into this. ~~ **Thanks to Sam TH for helping me fix
+this.**
+
+Working on this problem (see `from-string`) also made me realize that my
+untyped Celsius converter had no problem dealing with `Complex` Celsius
+degrees. And they seem to come out as `Complex` Fahrenheit degrees. Now I
+don't know about you, but I have no problems with `Complex` Celsius. But my
+types did; so I switched to `Real`. 
+
+### GRADUAL TYPING: Easy Type Injections 
 
 Injection types into tasks 1 through 5 is easy. 
 
@@ -36,7 +74,7 @@ surprising for a library.
 2. I added another adapter module, `from-string`, for converting strings to
 "rational" numbers. We should probably have more of those for Typed Racket. 
 
-### Non-trivial Type Injection 
+### GRADUAL TYPING: Non-trivial Type Injection 
 
 Converting `task-6` and `task-7` demonstrate in many ways that type
 injection is **really truly hard**. The Typed Racket documentation is much
@@ -155,43 +193,6 @@ to the resulting type. For other uses, I might make the macro subtract
 class init parameters and fields, but I haven't had a need for this
 functionality yet. 
 
-### Issues With My Original Code 
-
-Two small issues showed up during the conversion so far: 
-
-1. The type checker could not figure out that my flight-booker program
-(task 3) guarantees the existence of a selection in the `*kind` choice
-field. Since this isn't always the case, the probe for a selection may
-produce `#f` and the types for this method exposed the problem: 
-
-```
-((inst list-ref String) CHOICES (if self (or (send self get-selection) 0) 0)))
-```
-
-2. Using a variable to record both "the mouse is inside some area and this
-is its x coordinate" works well in Untyped code but for Types you're better
-off with splitting this into two variables. (It added a variable
-declaration and simplified a method, a lot.) 
-
-3. Adding types made me discover that the paint callback in a canvas
-receives the drawing context as the second argument, so there's no need to
-retrieve it with a `send`. The code wasn't wrong to say the second argument
-is `Any`, but figuring out what it was was a "good thing". 
-
-4. I could not figure out how to get an `Exact-Rational` from a string so I
-used a `cast`: 
-
-```
-(and r (if (real? r) (cast r Exact-Rational) #f)
-```
-I'll have to dig into this. ~~ **Thanks to Sam TH for helping me fix
-this.**
-
-Working on this problem (see `from-string`) also made me realize that my
-untyped Celsius converter had no problem dealing with `Complex` Celsius
-degrees. And they seem to come out as `Complex` Fahrenheit degrees. Now I
-don't know about you, but I have no problems with `Complex` Celsius. But my
-types did; so I switched to `Real`. 
 
 ### Issues With Typed Racket 
 
