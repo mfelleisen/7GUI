@@ -4,33 +4,33 @@
 ;; a simple spreadsheet (will not check for circularities)
 ;; -- This contains a bug that I discovered while I injected Macros. I should backport the fix. 
 
+;; ---------------------------------------------------------------------------------------------------
 (require 7GUI/Typed/task-7-exp)
+(require 7GUI/Typed/sub-canvas)
 
-;; -----------------------------------------------------------------------------
+;; ---------------------------------------------------------------------------------------------------
 (: valid-content (-> String (U False Integer)))
 (define (valid-content x)
   (define n (string->number x))
   (and n (if (and (integer? n) (exact? n)) n #f)))
 
 (struct formula ({formula : Exp} {dependents : [Setof Ref]}) #:transparent)
-#; {Formula    =  [formula Exp* || Number || (Setof Ref*)]}
 
 (: *content Content)
 (define *content  (make-immutable-hash)) ;; [Hashof Ref* Integer]
 (: *formulas (Immutable-HashTable Ref formula))
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
-(define-syntax-rule (define-getr name : ResultType (*source (selector Base)))
+(define-syntax-rule (define-getr name : ResultType HashType (*source selector default))
   (begin
-    (: name (->* (Letter Index) ([Immutable-HashTable Ref Base][-> Base ResultType]) (U False ResultType)))
-    (define (name letter index (*source *source) (selector selector))
-      (: f (U ResultType False))
-      (define f (hash-ref *source (list letter index) #f))
-      (and f (selector f)))))
+    (: name (-> Letter Index ResultType))
+    (define (name letter index) ; (source *source) (result->type selector))
+      (define f ((inst hash-ref Ref HashType) *source (list letter index) #f))
+      (if f (selector f) default))))
 
-(define-getr get-exp*       : Exp (*formulas (formula-formula formula)))
-(define-getr get-dependents : [Setof Ref] (*formulas (formula-dependents formula)))
-(define-getr get-content    : Integer (*content (values Integer)))
+(define-getr get-exp*       : Exp         formula (*formulas formula-formula 0))
+(define-getr get-dependents : [Setof Ref] formula (*formulas formula-dependents (set)))
+(define-getr get-content    : Integer     Integer (*content values 0))
 
 (: set-content! (-> Letter Index Integer Void))
 (define (set-content! letter index vc)
@@ -66,9 +66,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define DOUBLE-CLICK-INTERVAL (send (new keymap%) get-double-click-interval))
 
-(require 7GUI/Typed/sub-canvas)
-
-(define-canvas Cells-Canvas%)
+(define-type-canvas Cells-Canvas%)
 
 (define cells-canvas : Cells-Canvas%
   (class canvas%
@@ -76,18 +74,14 @@
 
     (: *possible-double-click? Boolean)
     (define *possible-double-click? #f)
-    (: *x Integer)
     (define *x 0)
-    (: *y Integer)
     (define *y 0)
 
     (: timer-cb (-> Void))
     (define (timer-cb) 
-      (when *possible-double-click?
-        (when (>= *x 0)
-          (when (>= *y 0)
-            (popup-content-editor (cast *x Natural) (cast *y Natural))
-            (paint-callback this (send this get-dc)))))
+      (when (and *possible-double-click? (>= *x 0) (>= *y 0))
+        (popup-content-editor (cast *x Natural) (cast *y Natural))
+        (paint-callback this (get-dc)))
       (set! *possible-double-click? #f))
     (: timer (Instance Timer%))
     (define timer (new timer% [notify-callback timer-cb]))
@@ -103,10 +97,9 @@
           [else
            (send timer stop)
            (set! *possible-double-click? #f)
-           (when (>= *x 0)
-             (when (>= *y 0)
-               (popup-formula-editor (cast *x Natural) (cast *y Natural))))
-           (paint-callback this (send this get-dc))])))
+           (when (and (>= *x 0) (>= *y 0))
+             (popup-formula-editor (cast *x Natural) (cast *y Natural)))
+           (paint-callback this (get-dc))])))
 
     (: paint-callback (-> Any (Instance DC<%>) Void))
     (define (paint-callback _self dc) (paint-grid dc))
@@ -141,10 +134,9 @@
 (define ((finder range SIZE) x0)
   (define x (- x0 SIZE))
   (and (positive? x)
-       (let ([r (for/list : (Listof X)
-                  ((r : X range)
-                   (i : Natural (in-naturals))
-                   #:when (<= (+ (* i SIZE)) x (+ (* (+ i 1) SIZE))))
+       (let ([r (for/list : (Listof X) ((r : X range)
+                                        (i : Natural (in-naturals))
+                                        #:when (<= (+ (* i SIZE)) x (+ (* (+ i 1) SIZE))))
                   r)])
          (or (and r (first r)) (error 'finder "impossible")))))
 
@@ -184,32 +176,29 @@
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents
 (: popup-editor
-   (All (X) (-> String (-> String (U False X)) (-> Letter Index X Void) (-> Letter Index X)
-                (-> Natural Natural Void))))
+   (All (X Y) (-> String (-> String (U False X)) (-> Letter Index X Void) (-> Letter Index Y)
+                  (-> Natural Natural Void))))
 (define ((popup-editor title-fmt validator registration source) x y)
   (define letter (x->A x))
   (define index  (y->0 y))
   (when (and letter index)
     (define value0 (~a (or (source letter index) "")))
     (define dialog (new dialog% [style '(close-button)] [label (format title-fmt letter index)]))
-    (: field (Instance Text-Field%))
-    (define field  (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80]
-                        [init-value value0]
-                        [callback (λ (self evt)
-                                    (when (eq? (send evt get-event-type) 'text-field-enter)
-                                      (define valid (validator (send field get-value)))
-                                      (when valid 
-                                        (registration letter index valid)
-                                        (send dialog show #f))))]))
+    (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80] [init-value value0]
+         [callback (λ (self evt)
+                     (when (eq? (send evt get-event-type) 'text-field-enter)
+                       (define valid (validator (send self get-value)))
+                       (when valid 
+                         (registration letter index valid)
+                         (send dialog show #f))))])
     (send dialog show #t)))
       
-(define popup-formula-editor
-  ((inst popup-editor Exp)
-   "a formula for cell ~a~a" string->exp* set-formula! (compose exp*->string get-exp*)))
+(define formula-fmt "a formula for cell ~a~a")
+(define get->string (λ ({L : Letter} {I : Index}) (exp*->string (get-exp* L I))))
+(define popup-formula-editor (popup-editor formula-fmt string->exp* set-formula! get->string))
 
-(define popup-content-editor
-  ((inst popup-editor Integer)
-   "content for cell ~a~a" valid-content set-content! get-content))
+(define content-fmt "content for cell ~a~a")
+(define popup-content-editor (popup-editor content-fmt valid-content set-content! get-content))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width (quotient WIDTH 2)][height (quotient HEIGHT 3)]))
