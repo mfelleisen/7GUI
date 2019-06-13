@@ -1,8 +1,8 @@
 #lang at-exp typed/racket/gui
 
-(provide define-frame)
+(provide define-type-frame)
 
-(define-syntax-rule (define-frame type-name extra ...)
+(define-syntax-rule (define-type-frame type-name extra ...)
   (define-type type-name
     (Class #:implements Frame%
            extra ...

@@ -1,8 +1,8 @@
 #lang at-exp typed/racket/gui
 
-(provide define-canvas)
+(provide define-type-canvas)
 
-(define-syntax-rule (define-canvas name-of-type% extra ...)
+(define-syntax-rule (define-type-canvas name-of-type% extra ...)
   (define-type name-of-type%
     (Class #:implements Canvas%
            ;; new methods 

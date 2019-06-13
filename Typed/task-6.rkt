@@ -72,7 +72,7 @@
 (define GRAY  (new brush% [color "gray"]))
 (define WHITE (new brush% [color "white"]))
 
-(define-canvas Circle-Canvas%
+(define-type-canvas Circle-Canvas%
   (unlock (-> Void))
   (draw-circles (->* ( {U False circle} ) ( [U False (Listof circle)]) Void)))
 
@@ -125,7 +125,7 @@
   (define slide (new adjuster-slider% [parent frame][init-value d0][update adjcb]))
   (send frame show #t))
 
-(define-frame Adjuster-Dialog%
+(define-type-frame Adjuster-Dialog%
   (init-field {closest-circle circle})
   (continuous (-> Natural Void)))
 

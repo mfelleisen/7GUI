@@ -88,9 +88,34 @@ degrees. And they seem to come out as `Complex` Fahrenheit degrees. Now I
 don't know about you, but I have no problems with `Complex` Celsius. But my
 types did; so I switched to `Real`. 
 
-
 5. Our `match-define` does not deal with type annotations on pattern
 variables. I opened an issue on this (#829). 
+
+6. Typed Racket's compose can't deal with multiple argument functions: 
+
+```
+((inst compose Number Number Number) add1 (λ (x y) (+ x y)))
+```
+
+7. I thoroughly miss occurrence typing for fields. It forces too many casts: 
+
+```
+(define cells-canvas : Cells-Canvas%
+  (class canvas%
+    (: *possible-double-click? Boolean)
+    (define *possible-double-click? #f)
+    (define *x 0)
+    (define *y 0)
+
+    (: timer-cb (-> Void))
+    (define (timer-cb) 
+      (when (and *possible-double-click? (>= *x 0) (>= *y 0))
+        (popup-content-editor (cast *x Natural) (cast *y Natural))
+        (paint-callback this (get-dc)))
+```
+
+In functional Racket, this would just work. (No it doesn't work if I split
+the `when`.)
 
 ### Insight 
 
