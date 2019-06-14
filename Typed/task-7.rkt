@@ -25,11 +25,11 @@
   (begin
     (: name (-> Letter Index ResultType))
     (define (name letter index) ; (source *source) (result->type selector))
-      (define f ((inst hash-ref Ref HashType) *source (list letter index) #f))
-      (if f (selector f) default))))
+      (define f (hash-ref *source (list letter index) (lambda () default)))
+      (selector f))))
 
-(define-getr get-exp*       : Exp         formula (*formulas formula-formula 0))
-(define-getr get-dependents : [Setof Ref] formula (*formulas formula-dependents (set)))
+(define-getr get-exp*       : Exp         formula (*formulas formula-formula (formula 0 (set))))
+(define-getr get-dependents : [Setof Ref] formula (*formulas formula-dependents (formula 1 (set))))
 (define-getr get-content    : Integer     Integer (*content values 0))
 
 (: set-content! (-> Letter Index Integer Void))
