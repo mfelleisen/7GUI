@@ -152,14 +152,13 @@
   (when (and letter index)
     (define value0 (~a (or (source letter index) "")))
     (define dialog (new dialog% [style '(close-button)] [label (format title-fmt letter index)]))
-    (define field  (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80]
-                        [init-value value0]
-                        [callback (λ (self evt)
-                                    (when (eq? (send evt get-event-type) 'text-field-enter)
-                                      (define valid (validator (send field get-value)))
-                                      (when valid 
-                                        (registration letter index valid)
-                                        (send dialog show #f))))]))
+    (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80] [init-value value0]
+         [callback (λ (self evt)
+                     (when (eq? (send evt get-event-type) 'text-field-enter)
+                       (define valid (validator (send self get-value)))
+                       (when valid 
+                         (registration letter index valid)
+                         (send dialog show #f))))])
     (send dialog show #t)))
       
 (define popup-formula-editor
