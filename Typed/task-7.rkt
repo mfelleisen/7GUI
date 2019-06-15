@@ -69,7 +69,7 @@
 
 (define-type-canvas Cells-Canvas%)
 
-(define cells-canvas : Cells-Canvas%
+(define cells-canvas% : Cells-Canvas%
   (class canvas%
     (inherit on-paint get-dc)
 
@@ -203,7 +203,7 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width (quotient WIDTH 2)][height (quotient HEIGHT 3)]))
-(define canvas (new cells-canvas [parent frame] [style '(hscroll vscroll)]))
+(define canvas (new cells-canvas% [parent frame] [style '(hscroll vscroll)]))
 (send canvas init-auto-scrollbars WIDTH HEIGHT 0. 0.)
 (send canvas show-scrollbars #t #t)
 
