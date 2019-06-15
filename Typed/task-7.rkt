@@ -28,8 +28,9 @@
       (define f (hash-ref *source (list letter index) (lambda () default)))
       (selector f))))
 
-(define-getr get-exp*       : Exp         formula (*formulas formula-formula (formula 0 (set))))
-(define-getr get-dependents : [Setof Ref] formula (*formulas formula-dependents (formula 1 (set))))
+(define formula0 (formula 0 (set)))
+(define-getr get-exp*       : Exp         formula (*formulas formula-formula formula0))
+(define-getr get-dependents : [Setof Ref] formula (*formulas formula-dependents formula0))
 (define-getr get-content    : Integer     Integer (*content values 0))
 
 (: set-content! (-> Letter Index Integer Void))
