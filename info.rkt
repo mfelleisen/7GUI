@@ -3,7 +3,7 @@
 (define collection "7GUI")
 
 (define deps
-  '(core
+  '(
     "base"
     "racket/gui"
     "gui-lib"
