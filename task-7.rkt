@@ -56,7 +56,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define DOUBLE-CLICK-INTERVAL (send (new keymap%) get-double-click-interval))
 
-(define cells-canvas
+(define cells-canvas%
   (class canvas%
     (inherit on-paint get-dc)
 
@@ -170,7 +170,7 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width (/ WIDTH 2)][height (/ HEIGHT 3)]))
-(define canvas (new cells-canvas [parent frame] [style '(hscroll vscroll)]))
+(define canvas (new cells-canvas% [parent frame] [style '(hscroll vscroll)]))
 (send canvas init-auto-scrollbars WIDTH HEIGHT 0. 0.)
 (send canvas show-scrollbars #t #t)
 
