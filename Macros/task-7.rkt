@@ -50,7 +50,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define DOUBLE-CLICK-INTERVAL (send (new keymap%) get-double-click-interval))
 
-(define cells-canvas
+(define cells-canvas%
   (class canvas%
     (define *double? #f)
     (define *x 0)
@@ -59,7 +59,7 @@
     (define (timer-cb)
       (when *double?
         (content-edit *x *y)
-        (paint-callback this 'y))
+        (paint-callback this (send this get-dc)))
       (set! *double? #f))
     (define timer (new timer% [notify-callback timer-cb]))
     
@@ -67,13 +67,13 @@
       (when (eq? (send evt get-event-type) 'left-down)
         (set!-values (*x *y) (values (send evt get-x) (send evt get-y)))
         (if *double?
-            (send timer start DOUBLE-CLICK-INTERVAL)
+ 	    ;; #true so that it doesn't get re-started 
+            (send timer start DOUBLE-CLICK-INTERVAL #true)
             (begin (send timer stop) (set! *double? #f) (formula-edit *x *y) (send this on-paint)))))
     
-    (define (paint-callback _self _evt) (paint-grid dc *content))
+    (define (paint-callback _self dc) (paint-grid dc *content))
     
-    (super-new [paint-callback paint-callback])
-    (define dc (send this get-dc))))
+    (super-new [paint-callback paint-callback])))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; grid layout 
@@ -155,7 +155,7 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"] [width (/ WIDTH 2)][height (/ HEIGHT 3)]))
-(define canvas (new cells-canvas [parent frame] [style '(hscroll vscroll)]))
+(define canvas (new cells-canvas% [parent frame] [style '(hscroll vscroll)]))
 (send canvas init-auto-scrollbars WIDTH HEIGHT 0. 0.)
 (send canvas show-scrollbars #t #t)
 

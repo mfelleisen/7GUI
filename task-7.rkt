@@ -78,7 +78,8 @@
         (cond
           [(not *possible-double-click?)
            (set! *possible-double-click? #t)
-           (send timer start DOUBLE-CLICK-INTERVAL)]
+	   ;; #true so that it doesn't get re-started 
+           (send timer start DOUBLE-CLICK-INTERVAL #true)]
           [else
            (send timer stop)
            (set! *possible-double-click? #f)
