@@ -205,26 +205,6 @@ variables. I opened an issue on this (#829).
 ((inst compose Number Number Number) add1 (λ (x y) (+ x y)))
 ```
 
-3. I thoroughly miss occurrence typing for private fields. It forces too many casts: 
-
-```
-(define cells-canvas : Cells-Canvas%
-  (class canvas%
-    (: *possible-double-click? Boolean)
-    (define *possible-double-click? #f)
-    (define *x 0)
-    (define *y 0)
-
-    (: timer-cb (-> Void))
-    (define (timer-cb) 
-      (when (and *possible-double-click? (>= *x 0) (>= *y 0))
-        (popup-content-editor (cast *x Natural) (cast *y Natural))
-        (paint-callback this (get-dc)))
-```
-
-In functional Racket, this would just work. (No it doesn't work if I split
-the `when`.)
-
 ### An Additional Insight About Typed Racket
 
 It is pretty cool how macros inside of a to-be-converted module can be made
