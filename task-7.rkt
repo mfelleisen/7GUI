@@ -5,6 +5,7 @@
 ;; -- This contains a bug that I discovered while I injected Macros. I should backport the fix. 
 
 (require 7GUI/task-7-exp)
+(require 7GUI/canvas-double-click)
 
 ;; -----------------------------------------------------------------------------
 (define (valid-content x)
@@ -54,41 +55,16 @@
     (set! *formulas (hash-set *formulas d (formula f (set-add old ref*))))))
 
 ;; ---------------------------------------------------------------------------------------------------
-(define DOUBLE-CLICK-INTERVAL (send (new keymap%) get-double-click-interval))
-
 (define cells-canvas%
-  (class canvas%
-    (inherit on-paint get-dc)
+  (class canvas-double-click%
 
-    (define *possible-double-click? #f)
-    (define *x 0)
-    (define *y 0)
+    (define/augment-final (on-click x y)
+      (popup-content-editor x y))
 
-    (define (timer-cb)
-      (when *possible-double-click?
-        (popup-content-editor *x *y)
-        (paint-callback this 'y))
-      (set! *possible-double-click? #f))
-    (define timer (new timer% [notify-callback timer-cb]))
-    
-    (define/override (on-event evt)
-      (when (eq? (send evt get-event-type) 'left-down)
-        (set! *x (send evt get-x))
-        (set! *y (send evt get-y))
-        (cond
-          [(not *possible-double-click?)
-           (set! *possible-double-click? #t)
-	   ;; #true so that it doesn't get re-started 
-           (send timer start DOUBLE-CLICK-INTERVAL #true)]
-          [else
-           (send timer stop)
-           (set! *possible-double-click? #f)
-           (popup-formula-editor *x *y)
-           (paint-callback this 'y)])))
-    
-    (define (paint-callback _self _evt) (paint-grid (get-dc)))
-    
-    (super-new [paint-callback paint-callback])))
+    (define/augment-final (on-double-click x y)
+      (popup-formula-editor x y))
+
+    (super-new [paint-callback (lambda (_self dc) (paint-grid dc *content))])))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; grid layout 
@@ -117,15 +93,20 @@
 
 (define y->0 (finder (in-range 100) VSIZE))
 
-(define (paint-grid dc)
+(define (paint-grid dc content)
   (send dc clear)
-  
+  (paint-hint  dc)
+  (paint-axes  dc)
+  (paint-cells dc content))
+
+(define (paint-hint dc)
   (let* ([current-font (send dc get-font)])
     (send dc set-font small-font)
     (send dc draw-text "click for content" X-OFFSET 2)
     (send dc draw-text "double for formula" X-OFFSET 15)
-    (send dc set-font current-font))
+    (send dc set-font current-font)))
 
+(define (paint-axes dc)
   (send dc set-brush solid-gray)
   (for ((letter (in-string LETTERS)) (i (in-naturals)))
     (define x (* (+ i 1) HSIZE))
@@ -135,13 +116,15 @@
   (for ((i (in-range 100)))
     (define y (* (+ i 1) VSIZE))
     (send dc draw-line 0 y WIDTH y)
-    (send dc draw-text (~a i) X-OFFSET (0->y i)))
+    (send dc draw-text (~a i) X-OFFSET (0->y i))))
 
-  (for (((key value) (in-hash *content)))
+(define (paint-cells dc content)
+  (for (((key value) (in-hash content)))
     (match-define (list letter index) key)
     (define x0 (A->x letter))
     (define y0 (0->y index))
     (send dc draw-text (~a value) x0 y0)))
+
 (define small-font (make-object font% 12 'roman))
 (define solid-gray (new brush% [color "lightgray"]))
 
