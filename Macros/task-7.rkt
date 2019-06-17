@@ -3,8 +3,11 @@
 
 ;; a simple spreadsheet (will not check for circularities)
 
-(require 7GUI/Macros/7guis)
 (require 7GUI/task-7-exp)
+(require 7GUI/task-7-view)
+(require 7GUI/canvas-double-click)
+
+(require 7GUI/Macros/7guis)
 
 ;; ---------------------------------------------------------------------------------------------------
 (define (valid-content x)
@@ -48,87 +51,11 @@
 (define-state *formulas (make-immutable-hash) propagate-change-to-formulas) ;; [HashOF Ref* Formula] 
 
 ;; ---------------------------------------------------------------------------------------------------
-(define DOUBLE-CLICK-INTERVAL (send (new keymap%) get-double-click-interval))
-
 (define cells-canvas%
-  (class canvas%
-    (define *double? #f)
-    (define *x 0)
-    (define-state *y 0 (λ _ (set! *double? (not *double?))))
-    
-    (define (timer-cb)
-      (when *double?
-        (content-edit *x *y)
-        (paint-callback this (send this get-dc)))
-      (set! *double? #f))
-    (define timer (new timer% [notify-callback timer-cb]))
-    
-    (define/override (on-event evt)
-      (when (eq? (send evt get-event-type) 'left-down)
-        (set!-values (*x *y) (values (send evt get-x) (send evt get-y)))
-        (if *double?
- 	    ;; #true so that it doesn't get re-started 
-            (send timer start DOUBLE-CLICK-INTERVAL #true)
-            (begin (send timer stop) (set! *double? #f) (formula-edit *x *y) (send this on-paint)))))
-    
-    (define (paint-callback _self dc) (paint-grid dc *content))
-    
-    (super-new [paint-callback paint-callback])))
-
-;; ---------------------------------------------------------------------------------------------------
-;; grid layout 
-(define HSIZE 100)
-(define VSIZE 30)
-
-(define X-OFFSET 2)
-(define Y-OFFSET 10)
-
-(define WIDTH  (* (+ (string-length LETTERS) 1) HSIZE))
-(define HEIGHT (* 101 VSIZE))
-
-(define (A->x letter)
-  (for/first ((l (in-string LETTERS)) (i (in-naturals)) #:when (equal? l letter))
-    (+ (* (+ i 1) HSIZE) X-OFFSET)))
-
-(define (0->y index)
-  (+ (* (+ index 1) VSIZE) Y-OFFSET))
-
-(define ((finder range SIZE) x0)
-  (define x (- x0 SIZE))
-  (and (positive? x)
-       (for/first ((r range) (i (in-naturals)) #:when (<= (+ (* i SIZE)) x (+ (* (+ i 1) SIZE)))) r)))
-
-(define x->A (finder (in-string LETTERS) HSIZE))
-
-(define y->0 (finder (in-range 100) VSIZE))
-
-(define (paint-grid dc content)
-  (send dc clear)
-  
-  (let* ([current-font (send dc get-font)])
-    (send dc set-font small-font)
-    (send dc draw-text "click for content" X-OFFSET 2)
-    (send dc draw-text "double for formula" X-OFFSET 15)
-    (send dc set-font current-font))
-
-  (send dc set-brush solid-gray)
-  (for ((letter (in-string LETTERS)) (i (in-naturals)))
-    (define x (* (+ i 1) HSIZE))
-    (send dc draw-rectangle x 0 HSIZE VSIZE)
-    (send dc draw-line x 0 x  HEIGHT)
-    (send dc draw-text (string letter) (A->x letter) Y-OFFSET))
-  (for ((i (in-range 100)))
-    (define y (* (+ i 1) VSIZE))
-    (send dc draw-line 0 y WIDTH y)
-    (send dc draw-text (~a i) X-OFFSET (0->y i)))
-
-  (for (((key value) (in-hash content)))
-    (match-define (list letter index) key)
-    (define x0 (A->x letter))
-    (define y0 (0->y index))
-    (send dc draw-text (~a value) x0 y0)))
-(define small-font (make-object font% 12 'roman))
-(define solid-gray (new brush% [color "lightgray"]))
+  (class canvas-double-click%
+    (define/augment-final (on-click x y) (content-edit x y))
+    (define/augment-final (on-double-click x y) (formula-edit x y))
+    (super-new [paint-callback (lambda (_self dc) (paint-grid dc *content))])))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents 
@@ -150,8 +77,8 @@
       
 (define content-edit (mk-edit "content for cell ~a~a" valid-content set-content! get-content))
 
-(define formula-edit
-  (mk-edit "a formula for cell ~a~a" string->exp* set-formula! (compose exp*->string get-exp*)))
+(define formula-fmt "a formula for cell ~a~a")
+(define formula-edit (mk-edit formula-fmt string->exp* set-formula! (compose exp*->string get-exp*)))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"] [width (/ WIDTH 2)][height (/ HEIGHT 3)]))
