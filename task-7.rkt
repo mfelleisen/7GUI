@@ -20,31 +20,27 @@
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
 (define-syntax-rule (iff selector e default) (let ([v e]) (if v (selector v) default)))
-  
-(define (get-exp* L I) (iff formula-formula (hash-ref *formulas (list L I) #f) 0))
-(define (get-dependents L I) (iff formula-dependents (hash-ref *formulas (list L I) #f) (set)))
-(define (get-content L I) (hash-ref *content (list L I) 0))
+(define (get-exp* ref*) (iff formula-formula (hash-ref *formulas ref* #f) 0))
+(define (get-dependents ref*) (iff formula-dependents (hash-ref *formulas ref* #f) (set)))
+(define (get-content ref*) (hash-ref *content ref* 0))
 
-(define (set-content! letter index vc)
-  (define ref* (list letter index))
-  (define current (get-content letter index))
+(define (set-content! ref* vc)
+  (define current (get-content ref*))
   (set! *content (hash-set *content ref* vc))
   (when (and current (not (= current vc)))
-    (define f (get-dependents letter index))
+    (define f (get-dependents ref*))
     (when f (propagate-to f))))
 
 (define (propagate-to dependents)
-  (for ((d dependents))
-    (define exp* (get-exp* (first d) (second d)))
-    (set-content! (first d) (second d) (evaluate exp* *content))))
+  (for ((d (in-set dependents)))
+    (set-content! d (evaluate (get-exp* d) *content))))
       
-(define (set-formula! letter index exp*)
-  (define ref*    (list letter index))
-  (define current (get-dependents letter index))
+(define (set-formula! ref* exp*)
+  (define current (get-dependents ref*))
   (define new     (formula exp* (or current (set))))
   (set! *formulas (hash-set *formulas ref* new))
   (register-with-dependents (depends-on exp*) ref*)
-  (set-content! letter index (evaluate exp* *content)))
+  (set-content! ref* (evaluate exp* *content)))
 
 (define (register-with-dependents dependents ref*)
   (for ((d (in-set dependents)))
@@ -62,23 +58,22 @@
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents 
 (define ((mk-edit title-fmt validator registration source) x y)
-  (define letter (x->A x))
-  (define index  (y->0 y))
-  (when (and letter index)
-    (define value0 (~a (or (source letter index) "")))
-    (define dialog (new dialog% [style '(close-button)] [label (format title-fmt letter index)]))
+  (define cell (list (x->A x) (y->0 y)))
+  (when (and (first cell) (second cell))
+    (define value0 (~a (or (source cell) "")))
+    (define dialog (new dialog% [style '(close-button)] [label (format title-fmt cell)]))
     (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80] [init-value value0]
          [callback (λ (self evt)
                      (when (eq? (send evt get-event-type) 'text-field-enter)
                        (define valid (validator (send self get-value)))
                        (when valid 
-                         (registration letter index valid)
+                         (registration cell valid)
                          (send dialog show #f))))])
     (send dialog show #t)))
       
-(define content-edit (mk-edit "content for cell ~a~a" valid-content set-content! get-content))
+(define content-edit (mk-edit "content for cell ~a" valid-content set-content! get-content))
 
-(define formula-fmt "a formula for cell ~a~a")
+(define formula-fmt "a formula for cell ~a")
 (define formula-edit (mk-edit formula-fmt string->exp* set-formula! (compose exp*->string get-exp*)))
 
 ;; ---------------------------------------------------------------------------------------------------
