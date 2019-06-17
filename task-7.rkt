@@ -19,14 +19,11 @@
 (define *content  (make-immutable-hash)) ;; [Hashof Ref* Integer]
 (define *formulas (make-immutable-hash)) ;; [HashOF Ref* Formula] 
 
-(define-syntax-rule (define-getr name (*source selector))
-  (define (name letter index)
-    (define f (hash-ref *source (list letter index) #f))
-    (and f (selector f))))
-
-(define-getr get-exp* (*formulas formula-formula))
-(define-getr get-dependents (*formulas formula-dependents))
-(define-getr get-content (*content values))
+(define-syntax-rule (iff selector e default) (let ([v e]) (if v (selector v) default)))
+  
+(define (get-exp* L I) (iff formula-formula (hash-ref *formulas (list L I) #f) 0))
+(define (get-dependents L I) (iff formula-dependents (hash-ref *formulas (list L I) #f) (set)))
+(define (get-content L I) (hash-ref *content (list L I) 0))
 
 (define (set-content! letter index vc)
   (define ref* (list letter index))
@@ -58,13 +55,13 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define cells-canvas%
   (class canvas-double-click%
-    (define/augment-final (on-click x y) (popup-content-editor x y))
-    (define/augment-final (on-double-click x y) (popup-formula-editor x y))
+    (define/augment-final (on-click x y) (content-edit x y))
+    (define/augment-final (on-double-click x y) (formula-edit x y))
     (super-new [paint-callback (lambda (_self dc) (paint-grid dc *content))])))
 
 ;; ---------------------------------------------------------------------------------------------------
 ;; cells and contents 
-(define ((popup-editor title-fmt validator registration source) x y)
+(define ((mk-edit title-fmt validator registration source) x y)
   (define letter (x->A x))
   (define index  (y->0 y))
   (when (and letter index)
@@ -79,11 +76,10 @@
                          (send dialog show #f))))])
     (send dialog show #t)))
       
-(define popup-formula-editor
-  (popup-editor "a formula for cell ~a~a" string->exp* set-formula! (compose exp*->string get-exp*)))
+(define content-edit (mk-edit "content for cell ~a~a" valid-content set-content! get-content))
 
-(define popup-content-editor
-  (popup-editor "content for cell ~a~a" valid-content set-content! get-content))
+(define formula-fmt "a formula for cell ~a~a")
+(define formula-edit (mk-edit formula-fmt string->exp* set-formula! (compose exp*->string get-exp*)))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define frame  (new frame% [label "Cells"][width (/ WIDTH 2)][height (/ HEIGHT 3)]))
