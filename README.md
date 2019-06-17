@@ -21,18 +21,12 @@ $ raco pkg install https://github.com/mfelleisen/7GUI.git
 
 To run in a shell, 
 ```
-./task-N.rkt 
+$ ./task-N.rkt 
 ```
-
-To run, 
-```
-gracket task-N.rkt
-```
-for any N. 
 
 ### [Macros](Macros/)
 
-The Macros directory shows how to develop macros that help clarify what's
+The `Macros/` directory shows how to develop macros that help clarify what's
 happening in the primitive implementations. using macros also reduces the
 length of the implementation, though by a constant amount. For the small
 problems, this reduction looks like a lot; for the larger one it is not
@@ -42,15 +36,26 @@ Still, reformulating the implementations with better "notation" uncovered a
 couple of small bugs. See [README](Macros/README.md).
 
 
+### [Types](Types/)
+
+The `Types/` directory demonstrates what it takes to add types to the
+simple implementations. The overhead is small for five of the seven tasks,
+non-trivial for the other two. 
+
+The addition of types points to small inconsistencies and revealed one
+misconception about a callback. 
+
+It also brought home that we need a guide for program conversions. 
+
 ### TO DO 
 
 - a proper MVC organization 
   - separate pieces 
   - propagate REPL changes to model
-- a Typed Racket implementation of the Unit code 
 - a unit-based organization of the MVC code with demos of how to replace
   the model or the view 
-- a Typed Racket implementation 
+
+- a unit-based organization .. with types 
 
 ### Questions To Be Explored
 
