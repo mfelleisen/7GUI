@@ -9,10 +9,6 @@
 (require 7GUI/Macros/7guis)
 
 ;; ---------------------------------------------------------------------------------------------------
-(define (valid-content x)
-  (define n (string->number x))
-  (and n (integer? n) n))
-
 (struct formula (formula dependents) #:transparent)
 #; {Formula    =  [formula Exp* || Number || (Setof Ref*)]}
 
@@ -46,7 +42,7 @@
 (define-state *formulas (make-immutable-hash) propagate-change-to-formulas) ;; [HashOF Ref* Formula] 
 
 ;; ---------------------------------------------------------------------------------------------------
-(define cells-canvas%
+(define ccanvas%
   (class canvas-double-click%
     (define/augment-final (on-click x y) (content-edit x y))
     (define/augment-final (on-double-click x y) (formula-edit x y))
@@ -73,7 +69,8 @@
 (define formula-edit (mk-edit formula-fmt string->exp* set-formula! (compose exp*->string get-exp*)))
 
 ;; ---------------------------------------------------------------------------------------------------
-(define-gui frame "Cells" (#:id canvas cells-canvas% [style '(hscroll vscroll)])) ;; TOO SMALL 
+(define-gui frame "Cells"
+  (#:id canvas ccanvas% (min-width (/ WIDTH 2)) (min-height (/ HEIGHT 3)) [style '(hscroll vscroll)]))
 (send canvas init-auto-scrollbars WIDTH HEIGHT 0. 0.)
 (send canvas show-scrollbars #t #t)
 

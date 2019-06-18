@@ -3,6 +3,9 @@
 (provide
  LETTERS
 
+ #; {String -> {U Integer False}}
+ valid-content
+
  #; {String -> Exp* u False}
  string->exp*
 
@@ -25,6 +28,10 @@
 ;; EXPRESSIONS: INTERNAL 
 #; {Ref*       =  (List Letter Index)}
 #; {Exp*       =  Ref*      || Integer || (list '+ Exp* Exp*)}
+
+(define (valid-content x)
+  (define n (string->number x))
+  (and n (integer? n) n))
   
 (define (string->exp* x)
   (define ip (open-input-string x))

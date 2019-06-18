@@ -9,11 +9,6 @@
 (require 7GUI/Typed/sub-canvas)
 
 ;; ---------------------------------------------------------------------------------------------------
-(: valid-content (-> String (U False Integer)))
-(define (valid-content x)
-  (define n (string->number x))
-  (and n (if (and (integer? n) (exact? n)) n #f)))
-
 (struct formula ({formula : Exp} {dependents : [Setof Ref]}) #:transparent)
 
 (: *content Content)

@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(provide Exp Content Ref Letter LETTERS string->exp* exp*->string depends-on evaluate)
+(provide Exp Content Ref Letter LETTERS valid-content string->exp* exp*->string depends-on evaluate)
 
 (define-type Letter Char
   #;
@@ -12,8 +12,9 @@
 (define-type Content (Immutable-HashTable Ref Integer))
 
 (require/typed 7GUI/task-7-exp
-               [LETTERS      String]
-               [string->exp* (-> String Exp)]
-               [exp*->string (-> Exp String)]
-               [depends-on   (-> Exp (Setof Ref))]
-               [evaluate     (-> Exp Content Integer)])
+               [LETTERS       String]
+               [valid-content (-> String (U Integer False))]
+               [string->exp*  (-> String Exp)]
+               [exp*->string  (-> Exp String)]
+               [depends-on    (-> Exp (Setof Ref))]
+               [evaluate      (-> Exp Content Integer)])
