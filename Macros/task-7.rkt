@@ -13,31 +13,29 @@
 #; {Formula    =  [formula Exp* || Number || (Setof Ref*)]}
 
 (define-syntax-rule (iff selector e default) (let ([v e]) (if v (selector v) default)))
-(define (get-exp* ref*) (iff formula-formula (hash-ref *formulas ref* #f) 0))
-(define (get-dependents ref*) (iff formula-dependents (hash-ref *formulas ref* #f) (set)))
+(define (get-exp ref*) (iff formula-formula (hash-ref *formulas ref* #f) 0))
+(define (get-dep ref*) (iff formula-dependents (hash-ref *formulas ref* #f) (set)))
 (define (get-content ref*) (hash-ref *content ref* 0))
 
 (define (set-content! ref* vc)
   (define current (get-content ref*))
   (when (and current (not (= current vc)))
-    (set! *content (many (list (hash-set *content ref* vc) ref* current vc)))))
+    (set! *content (many (list (hash-set *content ref* vc) ref*)))))
 
-(define (propagate-content-change _ ref* current vc)
-  (define dependents (get-dependents ref*))
-  (for ((d (in-set dependents)))
-    (set-content! d (evaluate (get-exp* d) *content))))
+(define (propagate-content-change _ ref*)
+  (for ((d (in-set (get-dep ref*))))
+    (set-content! d (evaluate (get-exp d) *content))))
 
 (define-state *content (make-immutable-hash) propagate-content-change) ;; [Hashof Ref* Integer]
 
 (define (set-formula! ref* exp*)
-  (define new (formula exp* (get-dependents ref*)))
+  (define new (formula exp* (get-dep ref*)))
   (set! *formulas (many (list (hash-set *formulas ref* new) ref* (depends-on exp*))))
   (set-content! ref* (evaluate exp* *content)))
 
 (define (propagate-change-to-formulas _ ref dependents)
   (for ((d (in-set dependents)))
-    (define new-deps (set-add (get-dependents d) ref))
-    (set! *formulas (stop (hash-set *formulas d (formula (get-exp* d) new-deps))))))
+    (set! *formulas (stop (hash-set *formulas d (formula (get-exp d) (set-add (get-dep d) ref)))))))
 
 (define-state *formulas (make-immutable-hash) propagate-change-to-formulas) ;; [HashOF Ref* Formula] 
 
@@ -66,7 +64,7 @@
 (define content-edit (mk-edit "content for cell ~a" valid-content set-content! get-content))
 
 (define formula-fmt "a formula for cell ~a")
-(define formula-edit (mk-edit formula-fmt string->exp* set-formula! (compose exp*->string get-exp*)))
+(define formula-edit (mk-edit formula-fmt string->exp* set-formula! (compose exp*->string get-exp)))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-gui frame "Cells"
