@@ -32,7 +32,7 @@
                    ;; -----------------------------------------------------------------------------
                    @;{ It is not clear to me yet, why I have to comment out the following line.
                        It is the only superfield that I populate via supernew. It's optional. So?}
-                     #;
+                     
                      (paint-callback (-> (Instance Canvas%) (Instance DC<%>) Any) #:optional)
                      ;; -----------------------------------------------------------------------------
 

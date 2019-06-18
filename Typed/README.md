@@ -193,6 +193,19 @@ to the resulting type. For other uses, I might make the macro subtract
 class init parameters and fields, but I haven't had a need for this
 functionality yet. 
 
+A small issue came up when I expanded on the gradual approach to typing: 
+It turns out that Typed Racket demands a duplicate specification of `pubment` methods:
+
+```
+(define-type-canvas Canvas-Double-Click%
+  (on-click (-> Natural Natural Void))
+  (on-double-click (-> Natural Natural Void))
+
+  [augment (on-click (-> Natural Natural Void))]
+  [augment (on-double-click (-> Natural Natural Void))])
+```
+
+See [double-click-canvas](double-click-canvas.rkt) for details. 
 
 ### Issues With Typed Racket 
 
@@ -204,6 +217,20 @@ variables. I opened an issue on this (#829).
 ```
 ((inst compose Number Number Number) add1 (λ (x y) (+ x y)))
 ```
+
+3. It turns out that adding augmentable method (see above) to the `canvas%`
+class uncovered missing method type specifications: 
+```
+(define-type-canvas Canvas-Double-Click%
+  (vert-margin (->* () (Integer) Void))
+  (horiz-margin (->* () (Integer) Void))
+  (get-scaled-client-size (-> (Values Integer Integer)))
+  (get-gl-client-size (-> (Values Integer Integer)))
+  ...)
+```
+
+  [augment (on-event  (-> (Instance Mouse-Event%) Void))]
+
 
 ### An Additional Insight About Typed Racket
 
