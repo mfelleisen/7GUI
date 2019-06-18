@@ -61,7 +61,7 @@
 
 (: mk-edit (All (X Y) (-> String (-> String (U False X)) (-> Ref X Void) (-> Ref Y) Edit%)))
 (define ((mk-edit title-fmt validator registration source) x y)
-  (define ref (list (x->A x) (y->0 y)))
+  (define ref (xy->A0 x y))
   (when (and (first ref) (second ref))
     (define value0 (~a (or (source ref) "")))
     (define dialog (new dialog% [style '(close-button)] [label (format title-fmt ref)]))

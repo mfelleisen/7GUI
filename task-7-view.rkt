@@ -7,6 +7,9 @@
  ;; DC [Hashof Ref Number] -> Void 
  paint-grid
 
+ ;; Natural Natural -> Ref
+ xy->A0 
+
  ;; Natural -> LETTERS 
  x->A
 
@@ -36,6 +39,8 @@
   (define x (- x0 SIZE))
   (and (positive? x)
        (for/first ((r range) (i (in-naturals)) #:when (<= (+ (* i SIZE)) x (+ (* (+ i 1) SIZE)))) r)))
+
+(define (xy->A0 x y) (list (x->A x) (y->0 y)))
 
 (define x->A (finder (in-string LETTERS) HSIZE))
 
