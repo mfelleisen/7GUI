@@ -1,8 +1,9 @@
 ## Adding Types to the Primitive GUI Solution 
 
-The files in this directory are typed versions of the task files from the
-parent directory. I did not convert `task-7-exp.rkt`, because it doesn't
-belong to the proper GUI tasks. 
+The files in this directory are *gradually* typed versions of the task
+files from the parent directory. I did not convert `task-7-exp.rkt`,
+`task-7-view.rkt`, and `double-click-canvas.rkt` because they don't belong
+to the proper GUI tasks or make the task interesting. 
 
 From the design perspective, adding types was less useful than exploiting
 more of Racket's macro power. See [Macros/README](../Macros/README.md). But
