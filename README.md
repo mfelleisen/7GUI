@@ -5,14 +5,17 @@ The top-level of this repository implements the "7 GUIs" task with the bare
 minimum that it took me to get things running and make them reflect what I
 was doing. (To my surprise, I never had to resort to unit testing.) 
 
-- task 1: a mouse-click counter 
-- task 2: a bi-directional temperature converter 
-- task 3: a constrained flight booking choice 
-- task 4: a timer 
-- task 5: a CRUD MVC 
-- task 6: a circle drawer, with undo/redo facility (under-specified)
-- task 7: a simple spreadsheet
-  - task 7-exp: implement the simplistic Expression language for spreadsheets
+- `task 1`: a mouse-click counter 
+- `task 2`: a bi-directional temperature converter 
+- `task 3`: a constrained flight booking choice 
+- `task 4`: a timer 
+- `task 5`: a CRUD MVC 
+- `task 6`: a circle drawer, with undo/redo facility (under-specified)
+- `task 7`: a simple spreadsheet
+  - `task 7-exp`: implement the simplistic Expression language for spreadsheets
+  - `task-7-view`: draw a grid on to some drawing context, and then add content 
+  - `canvas-double-click`: a canvas with methods for single-click and double-click reactions
+    [should perhaps be fleshed out and part of the GUI library]
 
 To install, 
 ```

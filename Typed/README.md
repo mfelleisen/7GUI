@@ -1,9 +1,32 @@
 ## Adding Types to the Primitive GUI Solution 
 
-The files in this directory are *gradually* typed versions of the task
-files from the parent directory. I did not convert `task-7-exp.rkt`,
-`task-7-view.rkt`, and `double-click-canvas.rkt` because they don't belong
-to the proper GUI tasks or make the task interesting. 
+The files in this directory re-implement the "7 GUIs" task in Typed Racket,
+using the  power of *migratory* typing. 
+
+- `task 1`: a single type annotation for a callback function suffices 
+- `task 2`: needs some type definitions and types for a widget element generator
+   - `from-string`:  needs a simple string to exact integer converter module, 
+     which Typed Racket should just provide 
+- `task 3`: like task 2
+  - `gregor`: needs an adapter module for a library (whose code we don't want to re-write)
+- `task 4`: `timer%` needs a type surprisingly 
+- `task 5`: a macro generates typed functions! 
+
+So far so good. 
+
+- `task 6`: needs two new modules:
+  - `sub-frame`: a module that abstracts over the type of `frame%` for sub-typing the class
+  - `sub-canvas`: a module that abstracts over the type of `canvas%` for sub-typing the class
+- `task 7`: needs the two new modules plus the adapter modules for 
+  - `task-7-exp`: TODO I think I should be able to eliminate Letter 
+  - `task-7-view`: showcases the simplicity of writing adapters 
+  - `double-click-canvas`: Typed Racket deals well with augmentation! (see below)
+
+It is because of the type system's expressive power that we just need type
+adapter modules for these three files (which are inessential to the tasks
+or should have been provided by Racket's base library).
+
+## The Experience 
 
 From the design perspective, adding types was less useful than exploiting
 more of Racket's macro power. See [Macros/README](../Macros/README.md). But
