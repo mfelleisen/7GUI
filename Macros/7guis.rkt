@@ -32,6 +32,9 @@
  ;; like define-gui, but immediately shows the constructed frame 
  gui
 
+ with
+ just
+
  stop
  many
  
@@ -139,8 +142,8 @@
                                    (~@))
                                o ...)])]))
 
-(provide with just)
 (define ((just f) old _self) (f old))
+
 (define-syntax (with stx)
   (syntax-parse stx
     [(_ x:id
