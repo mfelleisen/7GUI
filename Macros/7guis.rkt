@@ -18,17 +18,17 @@
  define-state*
  
  ;; SYNTAX
- #; (define-gui name:id Title:expr gui-spec)
- ;; -- defines name to be a frame-based GUI according to the gui-spec
+ #; {define-gui name:id Title:expr [#:frame expr] Title:expr gui-spec)}
+ ;; -- defines name to be a frame-based GUI according to the optional #:frame and gui-spec
  ;; 
- #; {gui-spec    == (gui-element ...)
-                 gui-element == (#:id x:id g:expr [l:id l0:expr] ...)
+ #; {gui-spec    == gui-element ... || (gui-element ...)
+     gui-element == (#:id x:id g:expr [l:id l0:expr] ...)
                  || (g:expr [l:id l0:expr] ...) }
  ;; a gui-element creates a widget using (new g [l l0] ...);
  ;; if an element comes with a #:id x, it is given the name x with the same scope as name
  define-gui
 
- #; (gui:id Title:expr (state:id state:expr propagate:expr) gui-spec)
+ #; {(gui [#:id id] [#:frame expr] Title:expr (state:id state:expr propagate:expr) gui-spec)}
  ;; like define-gui, but immediately shows the constructed frame 
  gui
 
