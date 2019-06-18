@@ -35,7 +35,7 @@
 (define (get-name) (string-append (send surname get-value) ", " (send name get-value)))
 
 ;; ---------------------------------------------------------------------------------------------------
-(define (mk-changer p) (with i #:post p #:field lbox #:method get-selection i))
+(define (mk-changer p) (with i #:post p #:widget lbox #:method get-selection i))
 (define (name-field% n) (class text-field% (super-new (label n) (init-value "") (min-width 200))))
 
 (define-gui frame "CRUD"
