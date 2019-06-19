@@ -20,7 +20,7 @@
 (define (set-content! ref* vc)
   (define current (get-content ref*))
   (when (and current (not (= current vc)))
-    (set! *content (many (list (hash-set *content ref* vc) ref*)))))
+    (set! *content (values (hash-set *content ref* vc) ref*))))
 
 (define (propagate-content-change _ ref*)
   (for ((d (in-set (get-dep ref*))))
@@ -30,7 +30,7 @@
 
 (define (set-formula! ref* exp*)
   (define new (formula exp* (get-dep ref*)))
-  (set! *formulas (many (list (hash-set *formulas ref* new) ref* (depends-on exp*))))
+  (set! *formulas (values (hash-set *formulas ref* new) ref* (depends-on exp*)))
   (set-content! ref* (evaluate exp* *content)))
 
 (define (propagate-change-to-formulas _ ref dependents)

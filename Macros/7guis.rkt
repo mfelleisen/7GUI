@@ -20,7 +20,7 @@
  stop
 
  ;; SYNTAX
- #; (set! x (many e))
+ #; (set! x (values e))
  ;; evaluate e to a list of values (why does values not work?) 
  ;; the change propagater function must be of arity (length e) 
  
@@ -82,7 +82,6 @@
          (define state-field state0)
          (define-getter/setter (state state-field g)))]))
 
-(define-syntax (many stx) (raise-syntax-error #f "used out of context"))
 (define-syntax (stop stx) (raise-syntax-error #f "used out of context"))
 
 (require (for-template syntax/parse))
@@ -95,12 +94,12 @@
            (make-set!-transformer
             (lambda (stx) 
               (syntax-parse stx
-                #:literals (stop many)
+                #:literals (stop values)
                 [x:id #'state-field]
                 [(set! x (stop e)) #'(set! state-field e)]
-                [(set! x (many e))
+                [(set! x (values e0 e (... ...)))
                  #'(call-with-values
-                    (λ () (apply values e))
+                    (λ () (apply values (list e0 e (... ...))))
                     (λ (y . r) (set! state-field y) (apply f state-field r)))]
                 [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
          ...)]))
