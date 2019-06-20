@@ -20,7 +20,7 @@ So far so good.
 - `task 7`: needs the two new modules plus the adapter modules for 
   - `task-7-exp`: TODO I think I should be able to eliminate Letter 
   - `task-7-view`: showcases the simplicity of writing adapters 
-  - `double-click-canvas`: Typed Racket deals well with augmentation! (see below)
+  - `canvas-double-click`: Typed Racket deals well with augmentation! (see below)
 
 It is because of the type system's expressive power that we just need type
 adapter modules for these three files (which are inessential to the tasks
@@ -229,7 +229,7 @@ It turns out that Typed Racket demands a duplicate specification of `pubment` me
   [augment (on-double-click (-> Natural Natural Void))])
 ```
 
-See [double-click-canvas](double-click-canvas.rkt) for details. 
+See [canvas-double-click](canvas-double-click.rkt) for details. 
 
 ### Issues With Typed Racket 
 
