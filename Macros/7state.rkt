@@ -15,15 +15,16 @@
  define-state*
 
  ;; SYNTAX
- #; (set! x (stop e))
- ;; do not propagate this change to state variable x
- stop
-
- ;; SYNTAX
- #; (set! x (values e))
+ #; (set! x (values e0 e ...))
  ;; evaluate e to a list of values (why does values not work?) 
  ;; the change propagater function must be of arity (length e)
- )
+
+ 
+
+ #; (set! x (stop e))
+ ;; do not propagate this change to state variable x
+ stop)
+
 
 ;; ---------------------------------------------------------------------------------------------------
 (require (for-syntax syntax/parse))
