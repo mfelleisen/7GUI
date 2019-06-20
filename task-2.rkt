@@ -9,7 +9,12 @@
 (define ((callback setter) field _evt)
   (send field set-field-background (make-object color% "white"))
   (define field:num (string->number (send field get-value)))
-  (if field:num (setter field:num) (send field set-field-background (make-object color% "red"))))
+  (cond
+    [(and field:num (rational? field:num))
+     (define inexact-n (* #i1.0 field:num))
+     (setter inexact-n)
+     (send field set-value (~r inexact-n #:precision 4))]
+    [else (send field set-field-background (make-object color% "red"))]))
 
 (define-syntax-rule (flow *from --> *to to-field)
   (λ (x)
