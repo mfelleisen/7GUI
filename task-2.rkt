@@ -1,7 +1,7 @@
 #! /usr/bin/env gracket
 #lang racket/gui
 
-;; a bi-dorectional temperature converter (Fahrenheit vs Celsius]
+;; a bi-directional temperature converter (Fahrenheit vs Celsius)
 
 (define *C 0)
 (define *F 0)
