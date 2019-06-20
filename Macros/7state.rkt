@@ -1,4 +1,4 @@
-#lang racket/gui
+#lang racket
 
 (provide
 
@@ -52,7 +52,7 @@
        (syntax-parse stx
          #:literals (stop values)
          [x:id #'state-field]
-         [(set! x (stop e)) #'(set! #,state-field e)]
+         [(set! x (stop e)) #'(set! state-field e)]
          [(set! x (values e0 e ...))
           #'(call-with-values
              (λ () (apply values (list e0 e ...)))
