@@ -6,7 +6,7 @@
 (require 7GUI/task-7-exp)
 (require 7GUI/task-7-view)
 (require 7GUI/canvas-double-click)
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 
 ;; ---------------------------------------------------------------------------------------------------
 (struct formula (formula dependents) #:transparent)

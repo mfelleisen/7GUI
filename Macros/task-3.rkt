@@ -5,7 +5,7 @@
 ;; and, depending on the choice, a start date or a start date and an end date. 
 
 ;; ---------------------------------------------------------------------------------------------------
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 (require gregor)
 
 ;; gregor should not raise an exception when parsing fails, but return #f

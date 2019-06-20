@@ -3,7 +3,7 @@
 
 ;; a bi-dorectional temperature converter (Fahrenheit vs Celsius]
 
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 
 (define-syntax-rule (propagate-to state f field)
   (λ (new-value-of-origin)

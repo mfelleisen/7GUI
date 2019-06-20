@@ -5,7 +5,7 @@
 ;; a gauge and a text field that display the fraction of the elapsed time
 ;; a reset button that sends the elapsed time back to 0
 
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 
 (define INTERVAL 100)
 

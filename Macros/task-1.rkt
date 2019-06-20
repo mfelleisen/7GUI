@@ -1,7 +1,7 @@
 #! /usr/bin/env gracket
 #lang racket/gui
 
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 
 (define-state *count 0 (lambda (x) (send display set-value (~a x))))
 

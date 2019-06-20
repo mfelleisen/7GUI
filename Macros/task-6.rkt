@@ -4,7 +4,7 @@
 ;; a circle drawer with undo/redo facilities (unclear spec for resizing)
 
 ;; ---------------------------------------------------------------------------------------------------
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 
 ;; ---------------------------------------------------------------------------------------------------
 (define Default-Diameter 20)

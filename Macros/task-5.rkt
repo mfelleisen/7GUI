@@ -4,7 +4,7 @@
 ;; a create-read-update-deleted MVC implementation 
 
 ;; ---------------------------------------------------------------------------------------------------
-(require 7GUI/Macros/7guis)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state)
 (define-syntax-rule (when=> (name exp) body ...) (let ((name exp)) (begin name body ...))) ;; -> base 
 
 ;; ---------------------------------------------------------------------------------------------------
