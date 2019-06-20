@@ -73,6 +73,7 @@
 (define WHITE (new brush% [color "white"]))
 
 (define-type-canvas Circle-Canvas%
+  #:minus-init (paint-callback)
   (unlock (-> Void))
   (draw-circles (->* ( {U False circle} ) ( [U False (Listof circle)]) Void)))
 
