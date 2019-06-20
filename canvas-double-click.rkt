@@ -30,8 +30,6 @@
     (define *evt 0)
     (define (call f) (f (send *evt get-x) (send *evt get-y)))
 
-    (λ x (on-click . x))
-
     (define (timer-cb)
       (when *single-click? (call (λ x (on-click . x))))
       (set! *single-click? #f))
