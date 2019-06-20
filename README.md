@@ -70,3 +70,14 @@ It also brought home that we need a guide for program conversions.
 
 - the redo for re-size in circle drawer could be a bug but the
   specification is underwhelming so I am not sure 
+
+### Acknowledgments 
+
+Will Byrd reported three bugs: 
+
+- [typos](https://github.com/mfelleisen/7GUI/commit/f90261a6790ed34f08afeb42f33e1fa646e7b543)
+- [geometry mismanagement](https://github.com/mfelleisen/7GUI/commit/c83ca4ccdbbc8e665019825c3280f9d5c003e146)
+- ['reading' numeric information from a text-field$](https://github.com/mfelleisen/7GUI/commit/13f00394789c21ae5dd9dd5bda003d449cdaf1f7)
+
+
+
