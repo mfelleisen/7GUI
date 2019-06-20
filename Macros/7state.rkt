@@ -67,4 +67,4 @@
                 [(set! x e) #'(begin (set! state-field e) (f state-field))]))))
          ...)]))
 
-(define-state *x 0 (compose displayln list)) (set! *x 1) (set! *x (values 1 2 3))
+; (define-state *x 0 (compose displayln list)) (set! *x 1) (set! *x (values 1 2 3))

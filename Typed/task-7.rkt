@@ -5,7 +5,7 @@
 
 (require 7GUI/Typed/task-7-exp)
 (require 7GUI/Typed/task-7-view)
-(require 7GUI/Typed/double-click-canvas)
+(require 7GUI/Typed/canvas-double-click)
 
 ;; ---------------------------------------------------------------------------------------------------
 (struct formula ({formula : Exp} {dependents : [Setof Ref]}) #:transparent)
