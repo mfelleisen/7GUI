@@ -16,10 +16,8 @@
 
  ;; SYNTAX
  #; (set! x (values e0 e ...))
- ;; evaluate e to a list of values (why does values not work?) 
- ;; the change propagater function must be of arity (length e)
-
- 
+ ;; evaluate e0 and e to a list of values, use e0's value as the new value
+ ;; for x and propagate all of these values to the propagation function. 
 
  #; (set! x (stop e))
  ;; do not propagate this change to state variable x
