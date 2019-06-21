@@ -12,9 +12,10 @@
 (struct circle (x y d action) #:transparent)
 
 (define (draw-1-circle dc brush c)
-  (send dc set-brush brush)
   (match-define (circle x y d _a) c)
-  (send dc draw-ellipse x y d d))
+  (send dc set-brush brush)
+  (define r (/ d 2))
+  (send dc draw-ellipse (- x r) (- y r) d d))
 
 (define-state *circles '() (lambda (x) (send canvas on-paint)))
 
@@ -49,7 +50,12 @@
         (set!-values (*circles *history) (values (cons fst (rest *circles)) (rest *history))))))
 
 (define (the-closest xm ym (circles *circles))
-  (argmin (distance xm ym) circles))
+  (define cdistance (distance xm ym))
+  (define-values (good-circles distance*)
+    (for*/fold ([good-circles '()][distance* '()])
+               ((c circles) (d (in-value (cdistance c))) #:when (< d (/ (circle-d c) 2)))
+      (values (cons c good-circles) (cons d distance*))))
+  (and (cons? distance*) (first (argmin second (map list good-circles distance*)))))
 
 (define (is-empty-area xm ym (circles *circles))
   (define dist (distance xm ym))
@@ -82,7 +88,9 @@
           [(leave)      (set! *x #f)]
           [(enter)      (set! *x 0)]
           [(left-down)  (when (is-empty-area *x *y) (add-circle! *x *y))]
-          [(right-down) (when (cons? *circles) (lock) (popup-adjuster this (the-closest *x *y)))])))
+          [(right-down)
+           (define on-circle (the-closest *x *y))
+           (when on-circle (lock) (popup-adjuster this on-circle))])))
     
     (define (paint-callback _self _evt)
       (cond

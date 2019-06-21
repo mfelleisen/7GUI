@@ -14,9 +14,10 @@
 
 (: draw-1-circle (-> (Instance DC<%>) (Instance Brush%) circle Void))
 (define (draw-1-circle dc brush c)
-  (send dc set-brush brush)
   (match-define (circle x y d _a) c)
-  (send dc draw-ellipse x y d d))
+  (send dc set-brush brush)
+  (define r (/ d 2))
+  (send dc draw-ellipse (- x r) (- y r) r r))
 
 (: *circles [Listof circle])
 (define *circles '())
@@ -54,9 +55,17 @@
         (set!-values (*circles *history) (values (cons fst *circles) (rest *history)))
         (set!-values (*circles *history) (values (cons fst (rest *circles)) (rest *history))))))
 
-(: the-closest (->* (Integer Integer) ([Listof circle]) circle))
-(define (the-closest xm ym (circles *circles))
-  (argmin (distance xm ym) circles))
+(: the-closest (->* (Integer Integer) ([Listof circle]) (U False circle)))
+(define (the-closest xm ym (c* *circles))
+  (define cdistance (distance xm ym))
+  (define-values (good-circles distance*)
+    (for*/fold ([good-circles : [Listof circle] '()][distance* : [Listof Real] '()])
+               ((c : circle c*) (d : Real (in-value (cdistance c))) #:when (< d (/ (circle-d c) 2)))
+      (values (cons c good-circles) (cons d distance*))))
+  (and (cons? distance*) (first (&argmin second  (&map &list good-circles distance*)))))
+(define &argmin (inst argmin (List circle Real)))
+(define &map    (inst map (List circle Real) circle Real))
+(define &list   (λ ({c : circle} {r : Real}) (list c r)))
 
 (: is-empty-area (->* (Integer Integer) ([Listof circle]) Boolean))
 (define (is-empty-area xm ym (circles *circles))
@@ -87,7 +96,7 @@
     (define *x 0)
     (define *y 0)
 
-    (define/override (on-event evt) : Void 
+    (define/override (on-event evt) : Void
       (unless *in-adjuster
         (define type (send evt get-event-type))
         (set! *x (send evt get-x))
@@ -96,7 +105,7 @@
           [(eq? 'leave type) (set! inside #f)]
           [(eq? 'enter type) (set! inside #t)]
           [(and (eq? 'left-down type) (is-empty-area *x *y)) (add-circle! *x *y)]
-          [(and (eq? 'right-down type) (cons? *circles)) (lock) (popup-adjuster (the-closest *x *y))])
+          [(and (eq? 'right-down type) (the-closest *x *y)) => (λ (tc) (lock) (popup-adjuster tc))])
         (send this on-paint)))
     
     (define/public (draw-circles closest (others-without-closest #f))
