@@ -5,7 +5,6 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (require 7GUI/Macros/7guis 7GUI/Macros/7state)
-(define-syntax-rule (when=> (name exp) body ...) (let ((name exp)) (begin name body ...))) ;; -> base 
 
 ;; ---------------------------------------------------------------------------------------------------
 (define (selector! nu) (set! *prefix nu))

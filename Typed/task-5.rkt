@@ -41,8 +41,10 @@
 (def-cb (Update-cb {_b : Any}) (common-cb (λ ({x : Natural}) (update-entry (retrieve-name) x))))
 (def-cb (Delete-cb {_b : Any}) (common-cb delete-from))
 
+(require 7GUI/should-be-racket)
+
 (: common-cb (-> (-> Natural Void) Void))
-(define (common-cb f) (define i (send lbox get-selection)) (when i (f i)))
+(define (common-cb f) (when* (send lbox get-selection) => f))
 (: retrieve-name (-> String))
 (define (retrieve-name) (string-append (send surname get-value) ", " (send name get-value)))
 

@@ -3,6 +3,7 @@
 
 ;; a simple spreadsheet (will not check for circularities)
 
+(require 7GUI/should-be-racket)
 (require 7GUI/task-7-exp)
 (require 7GUI/task-7-view)
 (require 7GUI/canvas-double-click)
@@ -18,8 +19,7 @@
 (define (get-content ref*) (hash-ref *content ref* 0))
 
 (define (set-content! ref* vc)
-  (define current (get-content ref*))
-  (when (and current (not (= current vc)))
+  (when (and* (get-content ref*) (lambda (current) (not (= current vc))))
     (set! *content (values (hash-set *content ref* vc) ref*))))
 
 (define (propagate-content-change _ ref*)
@@ -56,10 +56,8 @@
          (text-field% [label #f] [min-width 200] [min-height 80] [init-value value0]
                       [callback (λ (self evt)
                                   (when (eq? (send evt get-event-type) 'text-field-enter)
-                                    (define valid (validator (send self get-value)))
-                                    (when valid 
-                                      (setter cell valid)
-                                      (send D show #f))))]))))
+                                    (when*  (validator (send self get-value))
+				      => (lambda (valid) (setter cell valid) (send D show #f)))))]))))
       
 (define content-edit (mk-edit "content for cell ~a" valid-content set-content! get-content))
 

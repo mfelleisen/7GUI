@@ -36,7 +36,8 @@
 (def-cb (Update-cb _b) (common-cb (curry update-entry (retrieve-name))))
 (def-cb (Delete-cb _b) (common-cb delete-from))
 
-(define (common-cb f) (define i (send lbox get-selection)) (when i (f i)))
+(require 7GUI/should-be-racket)
+(define (common-cb f) (when* (send lbox get-selection) => f))
 (define (retrieve-name) (string-append (send surname get-value) ", " (send name get-value)))
 
 ;; ---------------------------------------------------------------------------------------------------

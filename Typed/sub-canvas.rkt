@@ -13,6 +13,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (require (for-syntax syntax/parse))
 (require (for-syntax racket/function))
+(require (for-syntax 7GUI/should-be-racket))
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-syntax (define-type-canvas stx)
@@ -20,11 +21,10 @@
     [(_ name-of-type% (~optional (~seq #:minus-init (y:id ...))) extra ...)
      #:do [(define yy (map syntax-e (syntax->list #'(~? (y ...) ()))))
 
-           (define y-not-in-labels
-             (for*/first ((z yy) (yy (in-value z)) #:unless (memf (curry eq? yy) labels)) z))
-           (when y-not-in-labels
-             (define fmt (format "cannot subtract ~a from ~a" y-not-in-labels labels))
-             (raise-syntax-error 'define-type-canvas fmt))
+           (when* (for*/first ((z yy) (yy (in-value z)) #:unless (memf (curry eq? yy) labels)) z)
+	     => (lambda (y-not-in-labels)
+		  (define fmt (format "cannot subtract ~a from ~a" y-not-in-labels labels))
+		  (raise-syntax-error 'define-type-canvas fmt)))
            
            (define (in l) (memf (curry eq? l) yy))
            (define inits-included (for/list ([l labels][i inits] #:unless (in l)) i))]

@@ -6,6 +6,7 @@
 (require 7GUI/Typed/task-7-exp)
 (require 7GUI/Typed/task-7-view)
 (require 7GUI/Typed/canvas-double-click)
+(require 7GUI/should-be-racket)
 
 ;; ---------------------------------------------------------------------------------------------------
 (struct formula ({formula : Exp} {dependents : [Setof Ref]}) #:transparent)
@@ -28,8 +29,7 @@
   (define current (get-content ref*))
   (set! *content (hash-set *content ref* vc))
   (when (and current (not (= current vc)))
-    (define f (get-dependents ref*))
-    (when f (propagate-to f))))
+    (when* (get-dependents ref*) =>  propagate-to)))
 
 (: propagate-to (-> [Setof Ref] Void))
 (define (propagate-to dependents)
@@ -68,10 +68,8 @@
     (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80] [init-value value0]
          [callback (λ (self evt)
                      (when (eq? (send evt get-event-type) 'text-field-enter)
-                       (define valid (validator (send self get-value)))
-                       (when valid 
-                         (registration ref valid)
-                         (send dialog show #f))))])
+                       (when* (validator (send self get-value)) => 
+			 (lambda (valid) (registration ref valid) (send dialog show #f)))))])
     (send dialog show #t)))
       
 (define formula-fmt "a formula for cell ~a")

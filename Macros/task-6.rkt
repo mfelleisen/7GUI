@@ -4,7 +4,7 @@
 ;; a circle drawer with undo/redo facilities (unclear spec for resizing)
 
 ;; ---------------------------------------------------------------------------------------------------
-(require 7GUI/Macros/7guis 7GUI/Macros/7state)
+(require 7GUI/Macros/7guis 7GUI/Macros/7state 7GUI/should-be-racket)
 
 ;; ---------------------------------------------------------------------------------------------------
 (define Default-Diameter 20)
@@ -89,8 +89,7 @@
           [(enter)      (set! *x 0)]
           [(left-down)  (when (is-empty-area *x *y) (add-circle! *x *y))]
           [(right-down)
-           (define on-circle (the-closest *x *y))
-           (when on-circle (lock) (popup-adjuster this on-circle))])))
+           (when* (the-closest *x *y) => (lambda (it) (lock) (popup-adjuster this it)))])))
     
     (define (paint-callback _self _evt)
       (cond
@@ -108,7 +107,7 @@
     (define dc (send this get-dc))))
 
 (define (popup-adjuster canvas closest-circle)
-  (define (cb _ evt)(when (eq? (send evt get-event-type) 'menu-popdown-none) (send canvas unlock)))
+  (define (cb _ evt) (when (eq? (send evt get-event-type) 'menu-popdown-none) (send canvas unlock)))
   (define pm (new popup-menu% [title "adjuster"][popdown-callback cb]))
   (new menu-item% [parent pm] [label "adjust radius"] [callback (adjuster! canvas closest-circle)])
   (send frame popup-menu pm  100 100))

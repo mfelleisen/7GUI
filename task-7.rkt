@@ -19,12 +19,12 @@
 (define (get-dep ref*) (iff formula-dependents (hash-ref *formulas ref* #f) (set)))
 (define (get-content ref*) (hash-ref *content ref* 0))
 
+(require 7GUI/should-be-racket)
 (define (set-content! ref* vc)
   (define current (get-content ref*))
   (set! *content (hash-set *content ref* vc))
   (when (and current (not (= current vc)))
-    (define f (get-dep ref*))
-    (when f (propagate-to f))))
+    (when* (get-dep ref*) => propagate-to)))
 
 (define (propagate-to dependents)
   (for ((d (in-set dependents)))
@@ -57,10 +57,8 @@
     (new text-field% [parent dialog] [label #f] [min-width 200] [min-height 80] [init-value value0]
          [callback (λ (self evt)
                      (when (eq? (send evt get-event-type) 'text-field-enter)
-                       (define valid (validator (send self get-value)))
-                       (when valid 
-                         (registration cell valid)
-                         (send dialog show #f))))])
+                       (when* (validator (send self get-value))
+			 => (lambda (valid) (registration cell valid) (send dialog show #f)))))])
     (send dialog show #t)))
       
 (define content-edit (mk-edit "content for cell ~a" valid-content set-content! get-content))
