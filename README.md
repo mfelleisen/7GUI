@@ -73,11 +73,19 @@ It also brought home that we need a guide for program conversions.
 
 ### Acknowledgments 
 
-Will Byrd reported three bugs: 
+[Jun 20, 2019] Will Byrd reported three bugs: 
 
 - [typos](https://github.com/mfelleisen/7GUI/commit/f90261a6790ed34f08afeb42f33e1fa646e7b543)
 - [geometry mismanagement](https://github.com/mfelleisen/7GUI/commit/c83ca4ccdbbc8e665019825c3280f9d5c003e146)
 - ['reading' numeric information from a text-field$](https://github.com/mfelleisen/7GUI/commit/13f00394789c21ae5dd9dd5bda003d449cdaf1f7)
 
+Asumu Takikawa explained `Class` again and how `init` works. 
+
+Ben Greenman discovered that `augment` methods also need `public`
+specifications in `Class`. 
+
+Sam Tobin-Hochstadt assisted with some non-Class-y aspects. 
 
 
+For other small assists, see the [commit
+log](https://github.com/mfelleisen/7GUI/commits/master). 
