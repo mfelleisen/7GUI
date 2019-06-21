@@ -17,7 +17,9 @@
 (define flow
   (with field:num #:post string->number
         (send self set-field-background (make-object color% "white"))
-        (or field:num (begin (send self set-field-background (make-object color% "red")) none))))
+        (cond
+          [(and field:num (rational? field:num)) (* #i1.0 field:num)]
+          [else (send self set-field-background (make-object color% "red")) none])))
 
 (define temp-field% (class text-field% (super-new [min-width 200])))
     

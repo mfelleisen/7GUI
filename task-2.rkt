@@ -7,8 +7,8 @@
 (define *F 0)
 
 (define ((callback setter) field _evt)
-  (send field set-field-background (make-object color% "white"))
   (define field:num (string->number (send field get-value)))
+  (send field set-field-background (make-object color% "white"))
   (cond
     [(and field:num (rational? field:num))
      (define inexact-n (* #i1.0 field:num))
