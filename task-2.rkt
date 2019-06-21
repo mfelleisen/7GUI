@@ -7,20 +7,26 @@
 (define *F 0)
 
 (define ((callback setter) field _evt)
-  (define field:num (string->number (send field get-value)))
-  (send field set-field-background (make-object color% "white"))
+  (define-values (field:num last) (string->number* (send field get-value)))
   (cond
     [(and field:num (rational? field:num))
      (define inexact-n (* #i1.0 field:num))
      (setter inexact-n)
-     (send field set-value (~r inexact-n #:precision 4))]
+     (render field inexact-n last)]
     [else (send field set-field-background (make-object color% "red"))]))
+
+(define (string->number* str)
+  (define n (string->number str))
+  (values n (and n (string-ref str (- (string-length str) 1)))))
 
 (define-syntax-rule (flow *from --> *to to-field)
   (λ (x)
     (set!-values (*from *to) (values x (--> x)))
-    (send to-field set-field-background (make-object color% "white"))
-    (send to-field set-value (~r *to #:precision 4))))
+    (render to-field *to "")))
+
+(define (render to-field *to last)
+  (send to-field set-field-background (make-object color% "white"))
+  (send to-field set-value (~a (~r *to #:precision 4) (if (eq? #\. last) "." ""))))
 
 (define celsius->fahrenheit (callback (flow *C (λ (c) (+  (* c 9/5) 32)) *F F-field)))
 (define fahrenheit->celsius (callback (flow *F (λ (f) (* (- f 32) 5/9))  *C C-field)))

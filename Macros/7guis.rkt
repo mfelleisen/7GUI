@@ -101,6 +101,16 @@
 
 (define-syntax (with stx)
   (syntax-parse stx
+    [(_ (values x:id ...)
+        (~optional (~seq #:post f:expr))
+        (~optional (~seq #:widget ff:id))
+        (~optional (~seq #:method m:id))
+        e ...)
+     #:with self (datum->syntax stx 'self)
+     #`(let ([g (~? f values)])
+         (λ (_old self)
+           (define-values (x ...) (g (send (~? ff self) (~? m get-value))))
+           e ...))]
     [(_ x:id
         (~optional (~seq #:post f:expr))
         (~optional (~seq #:widget ff:id))

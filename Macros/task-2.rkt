@@ -14,8 +14,12 @@
 (define-state *C 0  (propagate-to *F (λ (c) (+ (* c 9/5) 32)) F-field))
 (define-state *F 32 (propagate-to *C (λ (f) (* (- f 32) 5/9)) C-field))
 
+(define (string->number* str)
+  (define n (string->number str))
+  (values n (and n (string-ref str (- (string-length str) 1)))))
+
 (define flow
-  (with field:num #:post string->number
+  (with (values field:num last) #:post string->number*
         (send self set-field-background (make-object color% "white"))
         (cond
           [(and field:num (rational? field:num)) (* #i1.0 field:num)]
