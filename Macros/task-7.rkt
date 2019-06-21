@@ -19,7 +19,7 @@
 (define (get-content ref*) (hash-ref *content ref* 0))
 
 (define (set-content! ref* vc)
-  (when (and* (get-content ref*) (lambda (current) (not (= current vc))))
+  (when (and* (get-content ref*) => (lambda (current) (not (= current vc))))
     (set! *content (values (hash-set *content ref* vc) ref*))))
 
 (define (propagate-content-change _ ref*)

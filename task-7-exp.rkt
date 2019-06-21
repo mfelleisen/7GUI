@@ -18,6 +18,8 @@
  #;{ Exp* [Hashof Ref* Integer]  -> Integer}
  evaluate)
 
+(require 7GUI/should-be-racket)
+
 (define LETTERS  "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 ;; EXPRESSIONS: EXTERNAL, STRING-BASED REPRESENTATION 
@@ -30,8 +32,7 @@
 #; {Exp*       =  Ref*      || Integer || (list '+ Exp* Exp*)}
 
 (define (valid-content x)
-  (define n (string->number x))
-  (and n (integer? n) n))
+  (and* (string->number x) (lambda (n) (and (integer? n) n))))
   
 (define (string->exp* x)
   (define ip (open-input-string x))
@@ -70,11 +71,9 @@
 #; {Symbol -> (List Letter Index) u False}
 (define (valid-cell x:sym)
   (and (symbol? x:sym)
-       (let* ([x:str (symbol->string x:sym)]
-              [x (regexp-match #px"([A-Z])(\\d\\d)" x:str)])
-         (or (and x (split x))
-             (let ([x (regexp-match #px"([A-Z])(\\d)" x:str)])
-               (and x (split x)))))))
+       (let* ([x:str (symbol->string x:sym)])
+         (or (and* (regexp-match #px"([A-Z])(\\d\\d)" x:str) => split)
+             (and* (regexp-match #px"([A-Z])(\\d)" x:str) => split)))))
 
 (define (split x)
   (match x [(list _ letter index) (list (string-ref letter 0) (string->number index))]))
