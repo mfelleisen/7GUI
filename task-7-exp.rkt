@@ -32,7 +32,7 @@
 #; {Exp*       =  Ref*      || Integer || (list '+ Exp* Exp*)}
 
 (define (valid-content x)
-  (and* (string->number x) (lambda (n) (and (integer? n) n))))
+  (and* (string->number x) => (lambda (n) (and (integer? n) n))))
   
 (define (string->exp* x)
   (define ip (open-input-string x))
