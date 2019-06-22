@@ -21,19 +21,13 @@
 (define-for-syntax (generate-type-name-stx stx implements% init-parameters)
   (with-syntax ((stx stx) (implements% implements%))
     (syntax-parse #'stx
-      [(_ name-of-type% (~optional (~seq #:minus-init (y:id ...))) extra ...)
-       #:do ((define inits (syntax->list init-parameters))
-             (define labels (map (compose syntax-e car syntax-e) (syntax->list init-parameters)))
-             (define yy (map syntax-e (syntax->list #'(~? (y ...) ()))))
-             (when* (for*/first ((z yy) (yy (in-value z)) #:unless (memf (curry eq? yy) labels)) z)
+      [(_ name-of-type% (~optional (~seq #:minus-init (y:id ...))) methods ...)
+       #:do ((define inits0 (syntax->list init-parameters))
+             (define label0 (map (compose syntax-e car syntax-e) inits0))
+             (define inits- (map syntax-e (syntax->list #'(~? (y ...) ()))))
+             (when* (for*/first ((m inits-) #:unless (memf (curry eq? m) label0)) m)
                     => (lambda (y-not-in-labels)
-                         (define fmt (format "cannot subtract ~a from ~a" y-not-in-labels labels))
+                         (define fmt (format "cannot subtract ~a from ~a" y-not-in-labels label0))
                          (raise-syntax-error 'define-type-canvas fmt)))
-             (define (in l) (memf (curry eq? l) yy))
-             (define inits-included (for/list ([l labels][i inits] #:unless (in l)) i)))
-       #`(define-type name-of-type%
-           (Class #:implements implements%
-                  ;; new methods:
-                  extra ...
-                  ;; revised inits:
-                  (init #,@inits-included)))])))
+             (define inits+ (for/list ([l label0][i inits0] #:unless (memf (curry eq? l) inits-)) i)))
+       #`(define-type name-of-type% (Class #:implements implements% methods ... (init #,@inits+)))])))
