@@ -211,25 +211,33 @@ Eventually I figured out a good way to produce this `Class` type.
   (and fields). 
 
 If you anticipate to re-use this type again, abstract over it with a
-macro. See [sub-canvas](sub-canvas.rkt) for an example. The sample macro
-simply adds type specification clauses to the `Class` type and gives a name
-to the resulting type. For other uses, I might make the macro subtract
-class init parameters and fields, but I haven't had a need for this
-functionality yet. 
+macro. And after some reflection I had to do just this: 
 
-A small issue came up when I expanded on the gradual approach to typing: 
-It turns out that Typed Racket demands a duplicate specification of `pubment` methods:
+- [sub](sub.rkt) is a macro that generates a macro for abstracting over
+  sub-Class type definitions. Think of it as a family of type families. 
 
-```
-(define-type-canvas Canvas-Double-Click%
-  (on-click (-> Natural Natural Void))
-  (on-double-click (-> Natural Natural Void))
+- [sub-canvas](sub-canvas.rkt) uses this macro to define a family of
+  sub-types from which clients can subtract init fields and add method
+  specifications. 
 
-  [augment (on-click (-> Natural Natural Void))]
-  [augment (on-double-click (-> Natural Natural Void))])
-```
+- [rask 6](task-6.rkt) instantiates this type family with a subtraction of
+  the `paint-callback` `init` field {see line 85} and the addition of two
+  method specifications. 
 
-See [canvas-double-click](canvas-double-click.rkt) for details. 
+- [canvas-double-click](canvas-double-click.rkt) instantiates this type
+  family again, with the addition of four missing types for `Canvas%`
+  (which slipped in after the creation of Class types for Racket's GUI
+  widgets; see below), the addition of two augmentable methods and the
+  addition of an augmentation specification for `on-event`. It does *not*
+  subtract any `init` fields, in particular because the derivation of
+  `cells-canvas%` in [task 7](task-7.rkt) {line 52} must supply this `init`
+  parameter. 
+
+- [sub-frame](sub-frame.rkt) uses the instantiates the family of
+  type-families again, for `Frame%`. 
+
+This macro-generating type-generating macro has thus far been the highlight
+of the Typed Racket development. 
 
 ### Issues With Typed Racket 
 
@@ -255,6 +263,22 @@ class uncovered missing method type specifications:
 
   [augment (on-event  (-> (Instance Mouse-Event%) Void))]
 
+
+4. A small issue came up when I expanded on the gradual approach to typing: 
+It turns out that Typed Racket demands a duplicate specification of `pubment` methods:
+
+```
+(define-type-canvas Canvas-Double-Click%
+  (on-click (-> Natural Natural Void))
+  (on-double-click (-> Natural Natural Void))
+
+  [augment (on-click (-> Natural Natural Void))]
+  [augment (on-double-click (-> Natural Natural Void))])
+```
+
+See [canvas-double-click](canvas-double-click.rkt) for details.  We should
+have macros that expand inside Typed Racket's types so that we could build
+an abstraction over this ourselves.
 
 ### An Additional Insight About Typed Racket
 
