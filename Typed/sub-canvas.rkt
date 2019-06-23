@@ -15,18 +15,22 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-sub-type define-type-canvas Canvas%
-  (parent (Instance Area-Container<%>))
-  (style Style* #:optional)
+  (parent         (Instance Area-Container<%>))
+  (style          Style* #:optional)
   (paint-callback (-> (Instance Canvas%) (Instance DC<%>) Any) #:optional)
-  (label (U False String) #:optional)
-  (gl-config Any #:optional)
-  (enabled Any #:optional)
-  (vert-margin Nonnegative-Integer #:optional)
-  (horiz-margin Nonnegative-Integer #:optional)
-  (min-width (U Exact-Nonnegative-Integer False) #:optional)
-  (min-height (U Exact-Nonnegative-Integer False) #:optional)
-  (stretchable-width Any #:optional)
+  (label          MaybeString #:optional)
+  (gl-config      Any #:optional)
+  (enabled        Any #:optional)
+  (vert-margin    Nonnegative-Integer #:optional)
+  (horiz-margin   Nonnegative-Integer #:optional)
+  (min-width      MaybeN #:optional)
+  (min-height     MaybeN #:optional)
+  (stretchable-width  Any #:optional)
   (stretchable-height Any #:optional))
+
+(define-type MaybeString (U False String))
+
+(define-type MaybeN (U Exact-Nonnegative-Integer False))
 
 (define-type Style
   (U 'combo
