@@ -136,10 +136,10 @@
   (send frame show #t))
 
 (define-type-frame Adjuster-Dialog%
+  #:minus-init (label)
   (init-field {closest-circle circle})
   (continuous (-> Natural Void)))
 
-;; TO BE TYPED, work around bugs in Typed Racket 
 (define adjuster-dialog% : Adjuster-Dialog% 
   (class frame% (init-field closest-circle)
     ;; the next 3 are needed to get rid of error that says missing type for closest-circle

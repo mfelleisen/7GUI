@@ -8,6 +8,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 (define-sub-type define-type-frame Frame%
   (parent     (U (Instance Frame%) False) #:optional)
+  (label      String)
   (width      MaybeInt #:optional)
   (height     MaybeInt #:optional)
   (x          MaybeInt #:optional)
