@@ -28,10 +28,6 @@
   (stretchable-width  Any #:optional)
   (stretchable-height Any #:optional))
 
-(define-type MaybeString (U False String))
-
-(define-type MaybeN (U Exact-Nonnegative-Integer False))
-
 (define-type Style
   (U 'combo
      'border 'control-border 'gl 'hscroll 'vscroll 'resize-corner

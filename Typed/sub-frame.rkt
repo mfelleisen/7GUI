@@ -7,20 +7,22 @@
 
 ;; ---------------------------------------------------------------------------------------------------
 (define-sub-type define-type-frame Frame%
-  (parent (U (Instance Frame%) False) #:optional)
-  (width (U False Integer) #:optional)
-  (height (U False Integer) #:optional)
-  (x (U False Integer) #:optional)
-  (y (U False Integer) #:optional)
-  (style Style* #:optional)
-  (enabled Any #:optional)
-  (border Nonnegative-Integer #:optional)
-  (spacing Nonnegative-Integer #:optional)
-  (alignment (List (U 'center 'left 'right) (U 'bottom 'center 'top)) #:optional)
-  (min-width (U Exact-Nonnegative-Integer False) #:optional)
-  (min-height (U Exact-Nonnegative-Integer False) #:optional)
-  (stretchable-width Any #:optional)
+  (parent     (U (Instance Frame%) False) #:optional)
+  (width      MaybeInt #:optional)
+  (height     MaybeInt #:optional)
+  (x          MaybeInt #:optional)
+  (y          MaybeInt #:optional)
+  (style      Style* #:optional)
+  (enabled    Any #:optional)
+  (border     Nonnegative-Integer #:optional)
+  (spacing    Nonnegative-Integer #:optional)
+  (alignment  Alignment #:optional)
+  (min-width  MaybeN #:optional)
+  (min-height MaybeN #:optional)
+  (stretchable-width  Any #:optional)
   (stretchable-height Any #:optional))
+
+(define-type Alignment (List (U 'center 'left 'right) (U 'bottom 'center 'top)))
 
 (define-type Style
   (U 'float 'toolbar-button 'fullscreen-aux 'fullscreen-button 'hide-menu-bar
