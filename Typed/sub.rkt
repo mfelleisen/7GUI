@@ -33,8 +33,14 @@
     (pattern (name:id type (~optional #:optional))))
 
   (define-syntax-class class-type-clause
-    (pattern ((~optional (~or init init-field init-rest field augment)) name:id type))))
-
+    #:literals (init init-field init-rest field augment)
+    (pattern ((~optional (~or init init-field init-rest field augment)) (x:id t) ...)
+             #:attr name #'(x ...)
+             #:attr type #'(t ...))
+    (pattern (y:id s)
+             #:attr name #'(y)
+             #:attr type #'(s))))
+    
 (define-syntax (define-sub-type stx)
   (syntax-parse stx
     [(_ def-type:id implements%:id p:init-type ...)
