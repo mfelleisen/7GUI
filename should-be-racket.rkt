@@ -28,7 +28,7 @@
     [(_) #'(and)]
     [(_ e1:expr) #'(and e1)]
     [(_ e1:expr (~literal =>) e-next:expr e2:expr ...)
-     #'(let ([it e1]) (and it (e-next it) (and* e2 ...)))]
+     #'(let ([it e1]) (and* it (e-next it) e2 ...))]
     [(_ e1:expr e2:expr ...) #'(and e1 (and* e2 ...))]))
 
 (module+ test
