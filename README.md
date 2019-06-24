@@ -1,6 +1,10 @@
 
 ## A Racket Implementation of [7 GUIs](https://eugenkiss.github.io/7guis/)
 
+The purpose of this repository is to use the "seven GUI challenge" to
+illustrate basic GUI programming in Racket and, more importantly, explore
+program transformations such as the injection of types, macros, or both.
+
 The top-level of this repository implements the "7 GUIs" task with the bare
 minimum that it took me to get things running and make them reflect what I
 was doing. (To my surprise, I never had to resort to unit testing.) 
@@ -27,6 +31,18 @@ To run in a shell,
 $ ./task-N.rkt 
 ```
 
+*Pasteboard and Snips*
+
+The basic Racket control and canvas toolkit suffices for the seven GUIs
+challenges. Working through these examples provides a good first impression
+of its power, though for a thorough explanation I recommend the Racket
+documentation. 
+
+For sophisticated GUI applications, Racket supports pasteboard and snip
+widgets. Alex Harsányi has written up a [beautiful
+introduction](https://alex-hhh.github.io/2018/10/chess-game-using-racket-s-pasteboard.html)
+on this topic. 
+
 ### [Macros](Macros/)
 
 The `Macros/` directory shows how to develop macros that help clarify what's
@@ -44,6 +60,9 @@ couple of small bugs. See [README](Macros/README.md).
 The `Types/` directory demonstrates what it takes to add types to the
 simple implementations. The overhead is small for five of the seven tasks,
 non-trivial for the other two. 
+
+The use of macros to define families of type families is a great
+illustration of how Racket tools compose in a powerful synthesis. 
 
 The addition of types points to small inconsistencies and revealed one
 misconception about a callback. 
