@@ -9,6 +9,13 @@
 (define-sub-type define-type-frame Frame%
   (parent     (U (Instance Frame%) False) #:optional)
   (label      String)
+  ;; if I bring this line in, I get a weird error message: 
+  #;
+  (width      (U False Natural) #:optional)
+  ;; Type Checker: type mismatch;
+  ;; wrong type for init `width'
+  ;; expected: temp9
+  ;; given: temp6 
   (width      MaybeInt #:optional)
   (height     MaybeInt #:optional)
   (x          MaybeInt #:optional)
