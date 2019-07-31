@@ -12,6 +12,7 @@
     "typed-racket-lib"
     "typed-racket-more"
     "gregor"
+    "rackunit-lib"
     ))
 
 (define pkg-desc "Sources for 7GUI")
