@@ -11,6 +11,7 @@
     "htdp-lib"
     "typed-racket-lib"
     "typed-racket-more"
+    "rackunit-lib"
     "gregor"
     "rackunit-lib"
     ))
