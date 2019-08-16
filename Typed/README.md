@@ -290,3 +290,6 @@ to work with types:
   (define (name {x : (U String T)} {_y : Any}) : Void exp ... (send lbox set *selected)))
 ```
 
+### TODO 
+
+- explore the use of [type expander](https://github.com/jsmaniac/type-expander)

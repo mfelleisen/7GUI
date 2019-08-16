@@ -16,6 +16,7 @@
     "rackunit-lib"
     ))
 
+;; https://github.com/jsmaniac/type-expander
 (define pkg-desc "Sources for 7GUI")
 
 (define pkg-authors '(matthias))
