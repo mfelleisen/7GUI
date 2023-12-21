@@ -45,7 +45,7 @@
     (match fst
       [(circle x y d 'added) (set! *circles (rest *circles))]
       [(circle x y d `(resized (,r0 . ,sizes)))
-       (set! *circles (cons (circle x y r0 `(resized (,d))) (rest *circles)))])
+       (set! *circles (cons (circle x y r0 'added) (rest *circles)))])
     (set! *history (cons fst *history))))
 
 (define (redo) : Void 
