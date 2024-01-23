@@ -5,7 +5,6 @@
 (define deps
   '(
     "base"
-    "racket/gui"
     "gui-lib"
     "at-exp-lib"
     "htdp-lib"
